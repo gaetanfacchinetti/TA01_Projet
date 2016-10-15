@@ -1,4 +1,4 @@
-program main
+ program main
   use amsta01maillage
   use amsta01sparse
   use amsta01probleme
@@ -28,9 +28,9 @@ program main
 
   ! resolution du systeme lineaire
   ! call solveLU(pb)
-
+  
   ! resolution par jacobi
-  call solveJacobi(pb)
+  call solveJacobi(pb, 0.000001)
 
   ! calcul du residu
   residu=pb%felim-pb%p_Kelim*pb%u
@@ -40,7 +40,9 @@ program main
   ! calcul de l'erreur L2
   erreur=dsqrt(dot_product(pb%uexa-pb%u,pb%uexa-pb%u))
   print *, "||u-uexa||_2=", erreur
-
+  
+  
   ! sauvegarde de la solution et de la solution theorique
   call saveToVtu(pb%mesh,pb%u,pb%uexa)
+  
 end program

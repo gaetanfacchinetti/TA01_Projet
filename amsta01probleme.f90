@@ -220,53 +220,79 @@ module amsta01probleme
 
 
     ! calcul de la solution du problème par Jacobi
-    subroutine solveJacobi(pb)
+    subroutine solveJacobi(pb, conv)
 
       implicit none
 
-      type(probleme), intent(inout) :: pb
-      type(matsparse)              :: N
+      ! Variables d'entree et de sortie
+      type(probleme), intent(inout) :: pb         ! Probleme que l'on cherche a resoudre
+      real, intent(in)              :: conv       ! Critere de convergence pour la methode
 
-      real(kind=8), dimension(:), pointer   :: M, b, rk, uk
+      ! Variables locales
+      type(matsparse)                       :: N, M_inv    ! Matrice N et inverse de M avec K=M-N
+      real(kind=8), dimension(:), pointer   :: rk, uk      ! Itere de la solution et residu 
+      real(kind=8)                          :: Norm        ! Norme du residu 
+      integer                               :: n_size,i,k  ! Taille probleme et variables boucles
 
-
-      integer :: n_size,i,k
-      logical :: sortie
-      sortie = .FALSE.
-
+      ! On recupere la taille du probleme avec elimination
       n_size = size(pb%felim)
 
-      allocate(M(n_size), b(n_size))
+      ! On alloue les valeur des vecteurs itere au rang k de la solution et residu
+      allocate(uk(n_size), rk(n_size))
 
-      b = pb%felim
+      ! Definition des matrices M et N. Attention K = M - N ! 
+      call spcopy(N,spmatscal(-1.d0, pb%p_Kelim))
+      call sparse(M_inv, n_size, n_size) 
 
-      ! Definition des matrices M et N
-      call spcopy(N,pb%p_Kelim)
-      forall(i=1:n) M(i) = 1/(pb%p_Kelim(i,i))  !  Donne la valeur de l'inverse de la diagonale
-      forall(i=1:n) delcoef(N,i,i)              ! Supprime les coefficients diagonaux
-
-
-
-      ! Initialisation du vecteur
-      u_k = 0.d0
-
-      do while (sortie == .FALSE. .AND. k < 1000)
-
-         uk = dot_product(M,spmatvec(N,uk)) + dot_product(M,b)
-
-         rk = spmatvect(pb%p_Kelim, uk) - b
-         norm = sqrt(dot_product(rk, rk))
-
-         if (norm < 0.01) then 
-            sortie = .TRUE.
-         else
-
-         k = k+1
-
+      ! Ajout et suppresion de leurs coefficients
+      do i = 1,n_size
+         
+         ! Donne la valeur de l'inverse de la diagonale
+         call setcoeff(M_inv,i,i,(1.0d0)/(coeff(pb%p_Kelim, i,i)))
+         ! Supprime les coefficients diagonaux
+         call delcoeff(N,i,i)
+            
       end do
 
+      
+      ! Initialisation du vecteur solution
+      uk = 1.0d0
+      
+      
+      ! On preferera faire une boucle do pour ne pas avoir de fuite. On sort avec un exit.
+      do  k = 1,1000
+
+         ! Iteration de uk 
+         uk = spmatvec(M_inv,spmatvec(N,uk)) + spmatvec(M_inv,pb%felim)
+
+         ! Calcul de la norme de du residu pour observer la convergence
+         ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ? 
+         if (mod(k,10) == 0) then
+
+            ! Calcul de residu et de la norme
+            rk = spmatvec(pb%p_Kelim, uk) - pb%felim
+            norm = dsqrt(dot_product(rk, rk))
+
+            ! Si jamais on a atteint le critère de convergence on sort de la boucle
+            if (norm < conv) then
+               write(*,*)
+               write(*,*) '-----------------------------------------'
+               write(*,*) 'Precision attendue pour la convergence : ', conv
+               write(*,*) 'Convergence apres ', k, ' iterations de la methode de Jacobi'
+               write(*,*) '-----------------------------------------'
+               write(*,*)
+               exit 
+            end if
+
+         end if
+      end do
+
+      ! On donne a la solution la valeur du dernier itere
       pb%u = uk
 
+      ! On desallocate les matrice creees
+      deallocate(uk,rk)
+      
     end subroutine solveJacobi
 
 
