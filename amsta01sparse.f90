@@ -363,6 +363,9 @@ module amsta01sparse
         val=0.d0
       end if
     end function coeff
+
+
+    
     ! fonction de definition de la taille de la matrice
     subroutine setsize(a,n,m)
       type(matsparse), intent(inout) :: a
@@ -384,6 +387,8 @@ module amsta01sparse
         print *,a%i(i),a%j(i),a%val(i)
       end do
     end subroutine affiche
+
+    
     ! fonction de copie d'une matrice
     !     la matrice resultat doit etre vide
     subroutine spcopy(a,b)
@@ -410,6 +415,10 @@ module amsta01sparse
       real(kind=8), intent(in) :: b
       a%val=b
     end subroutine spaffect
+
+
+
+
     ! recherche la position d'un coefficient
     function findpos(a, i, j, mo) result(ind)
       implicit none
@@ -431,6 +440,9 @@ module amsta01sparse
         end if
       end do
     end function findpos
+
+
+
     ! recherche des coefficients correspondant a un critere
     function findind(a, mask) result(ind)
       implicit none
@@ -470,6 +482,9 @@ module amsta01sparse
       b%j=pack(a%j,mask)
       b%val=pack(a%val,mask)
     end function extract
+
+
+    
     ! tri d'une matrice
     subroutine sort(a, sens)
       implicit none
@@ -512,6 +527,9 @@ module amsta01sparse
         if (ok) exit
       end do
     end subroutine sort
+
+
+
     ! transposition d'une matrice
     function sptranspose(a) result(b)
       type(matsparse), intent(in) :: a
@@ -523,6 +541,10 @@ module amsta01sparse
       b%val=a%val
       call sort(b)
     end function sptranspose
+
+
+
+
     ! addition de deux matrices (standard)
     function spadd(a,b) result(c)
       implicit none
@@ -586,6 +608,9 @@ module amsta01sparse
       c%val=tmp%val(1:nnz-1)
       deallocate(tmp%i,tmp%j,tmp%val)
     end function spadd
+
+
+
     ! addition de deux matrices (par tri et fusion)
     function spadd2(a,b) result (c)
       implicit none
@@ -632,6 +657,10 @@ module amsta01sparse
       c%val=pack(tmp%val,mask)
       deallocate(mask,tmp%i,tmp%j,tmp%val)
     end function spadd2
+
+
+
+
     ! addition de deux matrices pre-triees
     function spaddsort(a,b) result(c)
       implicit none
@@ -715,6 +744,9 @@ module amsta01sparse
       c%val=tmp%val(1:nnz-1)
       deallocate(tmp%i,tmp%j,tmp%val)
     end function spaddsort
+
+
+
     ! soustraction de deux matrices
     function spminus(a,b) result (c)
       implicit none
@@ -757,6 +789,9 @@ module amsta01sparse
       c%val=pack(tmp%val,mask)
       deallocate(mask,tmp%i,tmp%j,tmp%val)
     end function spminus
+
+
+
     ! effectue le produit d'une matrice par un scalaire
     function spscalmat(a,b) result(c)
       implicit none
@@ -812,6 +847,10 @@ module amsta01sparse
         u(a%i(i))=u(a%i(i))+a%val(i)*b(a%j(i))
       end do
     end function spmatvec
+
+
+
+
     ! effectue le produit d'une matrice par une matrice
     function spmatmat(a,b) result(u)
       implicit none
@@ -1017,6 +1056,61 @@ module amsta01sparse
 
 
 
+    
+    ! Fonction permettant d'inverser une matrice triangulaire infrieure
+    function spTriInfInverse(a) result(b) 
+
+      implicit none
+
+      type(matsparse), intent(in) :: a
+      type(matsparse)             :: b
+
+      
+      real(kind=8)  :: compt
+      integer       :: i,j,l,k,ind
+
+
+     call sparse(b, a%n, a%n)
+      
+      if (a%n /= a%m) then
+         write(*,*) 'ERROR : SpTriInfInverse - la matrice a n est pas carree'
+         stop 
+      end if
+
+
+      ! On commence par ecrire les termes diagonaux
+      do i=1,a%n
+         if (coeff(a,i,i) /= 0) then 
+            call setcoeff(b,i,i,1.d0/coeff(a,i,i))
+         else
+            write(*,*) 'ERROR : SpTriInverse - la matrice a n est pas inversible'
+         end if
+      end do
+
+    
+      ! Boucle principale pour l'inversion des autres coefficient
+      do j=1,a%n
+         do l=1,j-1
+
+            compt = 0
+          
+            do k=l,j-1
+               compt = compt - coeff(a,j,k)*coeff(b,k,l)
+            end do
+
+            compt = compt/coeff(a,j,j)
+
+            if (compt /= 0) then 
+               call setcoeff(b,j,l,compt)
+            end if
+            
+            end do
+      end do
+
+    end function spTriInfInverse
+
+    
+    
 
     ! definition de la matrice identite sparse
     function speye(n) result(a)
