@@ -218,7 +218,7 @@ module amsta01probleme
     end subroutine solveLU
 
 
-    
+
     ! calcul de la solution du problème par Jacobi
     subroutine solveJacobi(pb, eps, conv)
 
@@ -245,33 +245,31 @@ module amsta01probleme
       ! On alloue les valeurs des vecteurs itere au rang k de la solution et residu
       allocate(uk(n_size), rk(n_size))
 
-      ! Definition des matrices M et N. Attention K = M - N ! 
-      call spcopy(N,spmatscal(-1.d0, pb%p_Kelim))
-      call sparse(M_inv, n_size, n_size) 
+      ! Definition des matrices M et N. Attention K = M - N !
+      call sparse(M_inv, n_size, n_size)
+      N = spmatscal(-1.d0, extract(pb%p_Kelim, pb%p_Kelim%i /= pb%p_Kelim%j ))
 
       ! Ajout et suppresion de leurs coefficients
       do i = 1,n_size
-         
+
          ! Donne la valeur de l'inverse de la diagonale
          call setcoeff(M_inv,i,i,(1.0d0)/(coeff(pb%p_Kelim, i,i)))
-         ! Supprime les coefficients diagonaux
-         call delcoeff(N,i,i)
-            
+
       end do
 
-      
+
       ! Initialisation du vecteur solution
-      uk = 1.0d0
-      
-      
+      uk = 1.d0
+
+
       ! On preferera faire une boucle do pour ne pas avoir de fuite. On sort avec un exit.
       do  k = 1,1000
 
-         ! Iteration de uk 
+         ! Iteration de uk
          uk = spmatvec(M_inv,spmatvec(N,uk)) + spmatvec(M_inv,pb%felim)
 
          ! Calcul de la norme de du residu pour observer la convergence
-         ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ? 
+         ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ?
          if (mod(k,10) == 0) then
 
             ! Calcul de residu et de la norme
@@ -284,39 +282,38 @@ module amsta01probleme
                write(*,*)
                write(*,*) 'INFO    : Precision attendue pour la convergence : ', eps
                write(*,*) 'INFO    : Convergence apres ', k, ' iterations de la methode de Jacobi'
-               exit 
+               exit
             end if
-            
+
          end if
       end do
-      
-     
+
       ! On donne a la solution la valeur du dernier itere
       pb%u = uk
 
       ! On desallocate les matrice creees
       deallocate(uk,rk)
-      
+
     end subroutine solveJacobi
 
 
 
-    
+
     ! Calcul de la solution par algorithme de Gauss-Seidel 
     subroutine solveGaussSeidel(pb, eps, conv)
-	
-      implicit none 
-      
-      type(probleme), intent(inout) :: pb 
+
+      implicit none
+
+      type(probleme), intent(inout) :: pb
       real, intent(in)              :: eps
       logical, intent(out)          :: conv
 
       ! Variables locales
-      type(matsparse)                     :: M_inv, N
+      type(matsparse)                     :: M, N
       real(kind=8), dimension(:), pointer :: rk, uk
       real(kind=8)                        :: norm
       integer                             :: n_size,i,k
-     
+
       ! conv est mise a false par default
       conv = .FALSE.
 
@@ -326,25 +323,24 @@ module amsta01probleme
       ! On alloue les valeurs des vecteurs solution et residu
       allocate(uk(n_size), rk(n_size))
 
-      ! Definition des matrices M et N. Attention K = M - N !
-      call sparse(N, n_size, n_size)
-      call sparse(M_inv, n_size, n_size)
+      ! Definition des matrices M et N. Attention K = M - N ! 
       N = spmatscal(-1.d0, extract(pb%p_Kelim, pb%p_Kelim%i < pb%p_Kelim%j))
-      M_inv = spTriInfInverse(extract(pb%p_Kelim, pb%p_Kelim%i >= pb%p_Kelim%j))
-      
-       
+      M = extract(pb%p_Kelim, pb%p_Kelim%i >= pb%p_Kelim%j)
+
+
       ! Initialisation du vecteur solution
-      uk = 1.0d0
-      
-      
+      uk = 1.d0
+
+
       ! On preferera faire une boucle do pour ne pas avoir de fuite. On sort avec un exit.
       do  k = 1,1000
-         
-         ! Iteration de uk 
-         uk = spmatvec(M_inv,spmatvec(N,uk)) + spmatvec(M_inv,pb%felim)
+
+         ! Iteration de uk
+         uk = spmatvec(N,uk) + pb%felim
+         uk = downSolve(M,uk)
 
          ! Calcul de la norme de du residu pour observer la convergence
-         ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ? 
+         ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ?
          if (mod(k,10) == 0) then
 
             ! Calcul de residu et de la norme
@@ -356,9 +352,9 @@ module amsta01probleme
                conv = .TRUE.
                write(*,*) 'INFO    : Precision attendue pour la convergence : ', eps
                write(*,*) 'INFO    : Convergence apres ', k, ' iterations de la methode de Gauss Seidel'
-               exit 
+               exit
             end if
-            
+
          end if
       end do
 
@@ -367,7 +363,7 @@ module amsta01probleme
       pb%u = uk
 
       ! On desallocate les matrice creees
-      deallocate(uk,rk) 
+      deallocate(uk,rk)
       
     end subroutine solveGaussSeidel
     

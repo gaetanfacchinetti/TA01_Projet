@@ -1011,22 +1011,22 @@ module amsta01sparse
       real(kind=8), dimension(size(f)) :: y
       integer, optional, intent(in) :: klo, kuo
       integer :: i, j, n, kl, ku, nl, nu, ind
-      
+
       n=size(f)
-      
+
       kl=size(f)-1
       if(present(klo).and.klo<n) then
         kl=klo
       end if
-      
+
       ku=size(f)-1
       if(present(kuo).and.kuo<n) then
         ku=kuo
       end if
-      
+
       x=0.d0
       y=0.d0
-      
+
       ! resolution de L*y=f
       do i=1,n
         y(i)=f(i)
@@ -1038,7 +1038,7 @@ module amsta01sparse
           end if
         end do
       end do
-      
+
       ! resolution de U x = y
       do i=n,1,-1
         x(i)=y(i)
@@ -1056,61 +1056,100 @@ module amsta01sparse
 
 
 
-    
+
+    ! Fonction de descente matrice triangulaire
+    function downSolve(a,y) result(x)
+
+      implicit none
+
+      type(matsparse), intent(in)               :: a
+      real(kind=8), dimension(:), intent(in)    :: y
+      real(kind=8), dimension(size(y))          :: x
+
+      integer :: i,j,ind,n
+
+
+      ! Initialisation de n
+      n = size(y)
+
+      ! Initialisation de x
+      x = 0.d0
+
+      ! resolution de ax=y
+      do i=1,n
+         x(i)=y(i)
+         do j=1,i-1
+            ind=find(a,i,j)
+            if(ind/=0) then
+               x(i)=x(i)-a%val(ind)*x(j)
+            end if
+         end do
+         ind=find(a,i,i)
+         if(a%val(ind) /= 0) then
+            x(i)=x(i)/a%val(ind)
+         else
+            write(*,*) 'ERROR  : downSolve - La matrice a n est pas inversible'
+         end if
+
+      end do
+
+    end function downSolve
+
+
+
+
     ! Fonction permettant d'inverser une matrice triangulaire infrieure
-    function spTriInfInverse(a) result(b) 
+    function spTriInfInverse(a) result(b)
 
       implicit none
 
       type(matsparse), intent(in) :: a
       type(matsparse)             :: b
 
-      
+
       real(kind=8)  :: compt
       integer       :: i,j,l,k,ind
 
 
-     call sparse(b, a%n, a%n)
-      
+      call sparse(b, a%n, a%n)
+
       if (a%n /= a%m) then
          write(*,*) 'ERROR : SpTriInfInverse - la matrice a n est pas carree'
-         stop 
+         stop
       end if
 
 
       ! On commence par ecrire les termes diagonaux
       do i=1,a%n
-         if (coeff(a,i,i) /= 0) then 
+         if (coeff(a,i,i) /= 0) then
             call setcoeff(b,i,i,1.d0/coeff(a,i,i))
          else
             write(*,*) 'ERROR : SpTriInverse - la matrice a n est pas inversible'
          end if
       end do
 
-    
+
       ! Boucle principale pour l'inversion des autres coefficient
       do j=1,a%n
          do l=1,j-1
 
             compt = 0
-          
+
             do k=l,j-1
                compt = compt - coeff(a,j,k)*coeff(b,k,l)
             end do
 
             compt = compt/coeff(a,j,j)
 
-            if (compt /= 0) then 
+            if (compt /= 0) then
                call setcoeff(b,j,l,compt)
             end if
-            
+
             end do
       end do
 
     end function spTriInfInverse
 
-    
-    
 
     ! definition de la matrice identite sparse
     function speye(n) result(a)
