@@ -1,15 +1,22 @@
+
 ! ----------------------------------------------------------------
 ! module de lecture de maillages gmsh
 ! Auteur : N. Kielbasiewicz
 ! -----------------------------------------------------------------
 
+! INFO
+! elemPartRef contient les sous domaines que l'element touche
+! elemNbPart contient le nombre d'info dans elemPartRef
+! RefPartNode contient la valeur du sous domaine auquel le noeud considere appartient
+
 
 module amsta01maillage
+
   type maillage
     integer :: nbNodes, nbElems, nbTri
     real(kind=8), dimension(:,:), pointer :: coords
-    integer, dimension(:,:), pointer :: typeElems, elemsVertices, triVertices
-    integer, dimension(:), pointer :: refNodes, refElems, refTri, elemsNbPart, triNbPart, elemsPartRef, triPartRef
+    integer, dimension(:,:), pointer :: typeElems, elemsVertices, triVertices, elemsPartRef, triPartRef
+    integer, dimension(:), pointer :: refNodes, refElems, refTri, elemsNbPart, triNbPart
   end type
 
 
@@ -22,27 +29,49 @@ module amsta01maillage
       integer, intent(in) :: t
       integer :: tt
       integer, dimension(31) :: nbNodesOfTypes
-      nbNodesOfTypes = (/2,3,4,4,8,6,5,3,6,9,10,27,18,14,1,8,20,15,13,9,10,12,15,15,21,4,5,6,20,35,56 /)
+      nbNodesOfTypes = (/2,3,4,4,8,6,5,3,6,9,10,27,18,14,1,8,20,15,13,9,10,12,15,15,21,4,5,6,20,35,56/)
       tt=nbNodesOfTypes(t)
     end function
 
 
 
+
+
+
+
     ! construit un maillage par lecture d'un fichier gmsh
-    function loadFromMshFile(filename) result(res)
+    function loadFromMshFile(filename, nbSsD) result(res)
+
       implicit none
-      character(len=*), intent(in) :: filename
+
+      character(len=*), intent(in)    :: filename
+      integer, optional, intent(in)   :: nbSsD            ! Nombre de sous domaines crees ous GMSH
+      integer                         :: nbSsDomaine
       type(maillage) :: res
       integer :: ios, ibuf, ibufD, ibufT, i, j, nbtags
       character(len=100) :: sbuf, sbuf2, sbuf3
       real(kind=8) :: rbuf
       integer, dimension(:), pointer :: elemData
+
+
+      ! Initialisation du nombre de sous domaines
+      if(present(nbSsD)) then
+         nbSsDomaine = nbSsD
+      else
+         nbSsDomaine = 2
+      end if
+
+
       open(unit=10, file=filename, form='formatted', status='old', iostat=ios)
+
       if (ios /= 0) then
         stop "ERROR File not opened"
       end if
+
       do while (ios == 0)
+
         read(10,*, iostat=ios) sbuf
+
         if (sbuf == "$MeshFormat") then
           ! read next line containing the file format version, and 2 integers about numeric precision
           read(10,*, iostat=ios) sbuf, sbuf2, sbuf3
@@ -51,6 +80,7 @@ module amsta01maillage
           if (sbuf /= "$EndMeshFormat") then
             stop "ERROR : Msh $MeshFormat block must end with $EndMeshFormat"
           end if
+
         else if (sbuf =="$Nodes") then
           ! read number of nodes
           read(10,*, iostat=ios) res%nbNodes
@@ -66,10 +96,15 @@ module amsta01maillage
           if (sbuf /= "$EndNodes") then
             stop "ERROR : Msh $Nodes block must end with $EndNodes"
           end if
+
+
         else if (sbuf =="$Elements") then
           read(10,*, iostat=ios) res%nbElems
           print*, "nbElems=",res%nbElems
+
           allocate(res%typeElems(res%nbElems,2), res%refElems(res%nbElems), res%elemsVertices(res%nbElems,3))
+          allocate(res%elemsPartRef(res%nbElems,nbSsDomaine))
+
           ! read elements data
           do i=1,res%nbElems
             ! We get each line in a character string
@@ -93,7 +128,13 @@ module amsta01maillage
                 res%refNodes(res%elemsVertices(i,j)) = res%refElems(i)
               end if
             end do
+
+            do j=1,elemData(6)
+               res%elemsPartRef(i,j) = elemData(6+j)
+            end do
+
             deallocate(elemData)
+
           end do
           ! check if block ends correctly
           read(10,'(A12)', iostat=ios) sbuf
@@ -103,7 +144,11 @@ module amsta01maillage
         else
         end if
       end do
+
+
       close(10)
+
+
     end function
 
 

@@ -51,10 +51,10 @@ program main
   write(*,*) 'Resolution du systeme lineaire : '
   
   ! Resolution par jacobi
-  call solveJacobi(pb, 0.000001, conv)
+  ! call solveJacobi(pb, 0.000001, conv)
   
   ! Resolution par Gauss Seidel
-  ! call solveGaussSeidel(pb, 0.000001, conv)
+  call solveGaussSeidel(pb, 0.000001, conv)
   
   ! Si on n'a pas converge on utilise une methode directe
   if (conv .eqv. .FALSE.) then
