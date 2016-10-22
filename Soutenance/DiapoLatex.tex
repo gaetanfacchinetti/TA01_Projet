@@ -1,0 +1,202 @@
+\documentclass[10pt]{beamer}
+
+
+% Pour le format de la langue
+\usepackage[frenchb]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Si on veut mettre du code C++
+\usepackage{listings}
+\lstset{
+language=c++,
+basicstyle=\ttfamily\scriptsize, %
+identifierstyle=\color{red}, %
+keywordstyle=\color{blue}, %
+stringstyle=\color{black!80}, %
+commentstyle=\it\color{gray}, %
+columns=flexible, %
+tabsize=2, %
+extendedchars=true, %
+showspaces=false, %
+showstringspaces=false, %
+numbers=left, %
+numberstyle=\tiny, %
+breaklines=true, %
+breakautoindent=true, %
+captionpos=b
+}
+
+% Pour les mathématiques :
+\usepackage{amsmath, amssymb}
+\usepackage{mathrsfs} 
+\usepackage{pgf}
+
+% Thème utilisé ici 
+\usetheme{default}
+
+% Pour les images
+\usepackage{graphicx}
+
+% Dossier où se trouvent les images
+\graphicspath{{imagesdiapo/}}
+
+% Pour la police des expressions mathématiques ou du texte
+%\usefonttheme[onlymath]{serif}
+\usefonttheme{serif}
+
+
+
+
+
+
+
+\setbeamertemplate{title page}{%
+\centering
+\color{cyan}
+\vspace*{8pt}
+\includegraphics[scale=0.05]{Logo_ENSTA.png}
+\hspace*{80pt}
+\includegraphics[scale=0.20]{logo_uma.png}
+\hfill
+\includegraphics[scale=0.15]{parisSaclay.jpg}\\
+\vspace*{10pt}
+\large \textbf{\inserttitle} \\
+\vspace*{6pt}
+\normalsize \insertsubtitle \\
+\vspace*{10pt}
+\color{black}
+\rule{2cm}{0.5pt}\\
+\vspace{10pt}
+\normalsize \insertauthor\\
+\vspace*{10pt}
+\small \textit{\insertinstitute}\\
+
+\vspace{12pt}
+\color{cyan}
+\insertdate\\
+\color{black}
+}
+
+
+\setbeamertemplate{navigation symbols}{}
+
+
+% Page de garde
+\title[Parallélisation d'une méthode d'éléments finis]{Parallélisation d'une méthode d'éléments finis pour la résolution de l'équation de la chaleur}
+\subtitle{Calcul parallèle scientifique - Soutenance de Projet\\
+Master 2 Analyse Modélisation Simulation}
+\author{Pierre-Emmanuel Emeriau \& Gaétan Facchinetti}
+\institute{Université Paris-Saclay \\ Ecole Nationale Supérieure des Techniques Avancées \\ Ecole Normale Supérieure Paris-Saclay}
+\date{24 novembre 2016}
+
+
+\setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+
+
+\newcommand{\footHeadLine}{%
+\logo{\pgfputat{\pgfxy(-1.0,1.2)}{\pgfbox[center,base]{\includegraphics[scale=0.1]{parisSaclay.jpg}}}}
+\setbeamertemplate{footline}{%
+\raggedright%
+\vspace*{-12pt}%
+\color{white}%
+\hspace*{2em}%
+{\sffamily\small\color{white} Emeriau - Facchinetti \hspace*{4pt}/ \hspace*{4pt} 16 novembre 2016 \hfill \color{black}\thepage\hspace*{2em}}%
+\vspace*{2pt}%
+}%
+%
+\setbeamertemplate{headline}{%
+\ifnum \thesubsection>0%
+\vspace*{6pt}%
+\raggedright%
+\hspace*{5em}%
+{\sffamily\normalsize\bfseries\color{white}\thesection.~\insertsection\\}%
+\vspace*{3pt}
+\hspace*{9em}
+{\sffamily\small\bfseries\color{white}\thesubsection.~\insertsubsection}%
+\hspace*{2em}%
+\else 
+\vspace*{10pt}%
+\raggedright%
+\hspace*{5em}%
+{\sffamily\normalsize\bfseries\color{white}\thesection.~\insertsection\\}%
+\vspace*{3pt}
+\fi%
+}
+}
+
+\newcommand{\sommaire}{%
+\setbeamertemplate{footline}{}
+\setbeamertemplate{headline}{}
+\logo{}
+\begin{frame}
+	\tableofcontents[currentsection]
+\end{frame}
+\footHeadLine{}
+}
+
+% On declare les images utilisee en logo et en fond
+\pgfdeclareimage[height=96mm,width=128mm]{fond}{Presentation3.pdf}
+
+% On definit le fond
+\setbeamertemplate{background}{\pgfuseimage{fond}}
+
+
+
+
+
+
+
+
+
+
+\begin{document}
+
+	\begin{frame}[t]
+	\titlepage
+	\end{frame}
+
+
+	\begin{frame}
+	\tableofcontents
+	\end{frame}
+
+
+
+
+
+
+
+
+\footHeadLine{}
+
+\section{Introduction du problème}
+\subsection{L'équation de la chaleur}
+
+\sommaire{}
+
+	\begin{frame}
+		L'équation de la chaleur en régme stationnaire est donnée par : \\
+		\centering
+		$\Delta u = f $ dans $\Omega$
+	\end{frame}
+
+
+
+\subsection{La métode des éléments finis}
+
+	\begin{frame}
+	Frame de test
+	\end{frame}
+
+
+\section{Nouvelle section}
+\sommaire{}
+
+	\begin{frame}	
+		Frame de test
+	\end{frame}		
+
+
+
+\end{document}

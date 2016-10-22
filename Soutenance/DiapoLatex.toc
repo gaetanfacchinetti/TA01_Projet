@@ -1,0 +1,6 @@
+\beamer@endinputifotherversion {3.36pt}
+\select@language {french}
+\beamer@sectionintoc {1}{Introduction du probl\IeC {\`e}me}{3}{0}{1}
+\beamer@subsectionintoc {1}{1}{L'\IeC {\'e}quation de la chaleur}{3}{0}{1}
+\beamer@subsectionintoc {1}{2}{La m\IeC {\'e}tode des \IeC {\'e}l\IeC {\'e}ments finis}{5}{0}{1}
+\beamer@sectionintoc {2}{Nouvelle section}{6}{0}{2}
