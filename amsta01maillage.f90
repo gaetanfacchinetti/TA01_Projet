@@ -12,10 +12,15 @@
 
 module amsta01maillage
 
+  ! A utiliser peut être pour definir refPartNodes
+  ! use amsta01sparse
+  
+  implicit none
+  
   type maillage
     integer :: nbNodes, nbElems, nbTri
     real(kind=8), dimension(:,:), pointer :: coords
-    integer, dimension(:,:), pointer :: typeElems, elemsVertices, triVertices, elemsPartRef, triPartRef
+    integer, dimension(:,:), pointer :: typeElems, elemsVertices, triVertices, elemsPartRef, triPartRef, refPartNodes
     integer, dimension(:), pointer :: refNodes, refElems, refTri, elemsNbPart, triNbPart
   end type
 
@@ -48,7 +53,7 @@ module amsta01maillage
       integer, optional, intent(in)   :: nbSsD            ! Nombre de sous domaines crees ous GMSH
       integer                         :: nbSsDomaine
       type(maillage) :: res
-      integer :: ios, ibuf, ibufD, ibufT, i, j, nbtags
+      integer :: ios, ibuf, ibufD, ibufT, i, j, nbtags, k
       character(len=100) :: sbuf, sbuf2, sbuf3
       real(kind=8) :: rbuf
       integer, dimension(:), pointer :: elemData
@@ -103,8 +108,12 @@ module amsta01maillage
           print*, "nbElems=",res%nbElems
 
           allocate(res%typeElems(res%nbElems,2), res%refElems(res%nbElems), res%elemsVertices(res%nbElems,3))
-          allocate(res%elemsPartRef(res%nbElems,nbSsDomaine))
+          allocate(res%elemsPartRef(res%nbElems,nbSsDomaine), res%refPartNodes(res%nbNodes, nbSsDomaine))
 
+          ! Initialisation des domaines des domaines de partition
+          ! Ce tableau pourrait être un matsparse par exemple ce serait mieux
+          res%refPartNodes = 0 
+          
           ! read elements data
           do i=1,res%nbElems
             ! We get each line in a character string
@@ -129,12 +138,49 @@ module amsta01maillage
               end if
             end do
 
+            ! Association element / sous domaine auquel il appartient
             do j=1,elemData(6)
                res%elemsPartRef(i,j) = elemData(6+j)
             end do
 
+
+            ! affectation des noeuds à un domaine et teste de leur appartenance à plusieurs domaines
+            ! 1 -> noeud du bord; 2 -> noeud de l'intérieur; -7 -> noeud d'une interface; -3 -> noeud interface inter bord
+            
+            ! Attention on n'initialise pas res%RefPartNodes a 0 ici sinon il
+            ! est remis a 0 a chaque tour et ca ne fonctionne pas
+            do j = 1,res%typeElems(i,2)
+
+               ! On teste si le noeud a deja ete lu et attribue a un domaine
+               if(res%RefPartNodes(res%elemsVertices(i,j),1) == 0) then
+
+                  ! On attribu un domaine au noeud considere
+                  res%RefPartNodes(res%elemsVertices(i,j),1) = elemData(7)
+
+               ! S'il a ete attribue et que le nouveau domaine lu dans elemData(7) est different de celui enregistre 
+               else if (res%RefPartNodes(res%elemsVertices(i,j),1) /= elemData(7)) then 
+
+                  ! On donne le nouveau sous domaine auquel appartient le noeud
+                  do k=1,nbSsDomaine
+                     if(res%refPartNodes(res%elemsVertices(i,j),k) == elemData(7)) exit
+                     if(res%refPartNodes(res%elemsVertices(i,j),k) == 0) then
+                        res%refPartNodes(res%elemsVertices(i,j),k) = elemData(7)
+                        exit 
+                     end if
+                  end do
+                  
+                  ! S'il s'agissait d'un noeud du bord on le met a la valeur -3
+                  if(res%refNodes(res%elemsVertices(i,j)) == 1) res%refNodes(res%elemsVertices(i,j)) = -3
+                  ! S'il s'agissait d'un noeud hors du bords n'ayant donc pas deja ete mis a -3
+                  if(res%refNodes(res%elemsVertices(i,j)) >= 0 ) res%refNodes(res%elemsVertices(i,j)) = -7
+                  
+               end if
+              
+            end do
+               
             deallocate(elemData)
 
+            
           end do
           ! check if block ends correctly
           read(10,'(A12)', iostat=ios) sbuf
@@ -148,10 +194,30 @@ module amsta01maillage
 
       close(10)
 
+      
 
-    end function
+
+    end function loadFromMshFile
 
 
+
+    subroutine affichePart(mail)
+
+      implicit none
+
+      type(maillage), intent(in) :: mail
+      integer    :: j
+
+      do j=1,mail%nbNodes
+         write(*,*) 'Noeud numero : ', j, ' | RefNodes : ', mail%refNodes(j), ' |  RefPartNodes : ', mail%refPartNodes(j,:)        
+      end do
+
+    end subroutine affichePart
+
+
+
+
+    
     ! construit la liste des triangles du maillage
     subroutine getTriangles(mail)
       type(maillage), intent(inout) :: mail

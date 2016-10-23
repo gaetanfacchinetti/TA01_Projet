@@ -27,7 +27,9 @@ program main
   write(*,*) 'Proprietes du maillage :' 
  
   ! lecture du maillage
-  mail = loadFromMshFile("./testpart.msh")
+  mail = loadFromMshFile("./essaiGmsh.msh",3)
+  ! Affichage des données des noeuds
+   call affichePart(mail)
   ! construction des donnees sur les triangles
   call getTriangles(mail)
   ! creation du probleme
@@ -36,6 +38,7 @@ program main
   call assemblage(pb)
   ! pseudo-elimination des conditions essentielles
   call pelim(pb,mail%refNodes(1))
+
 
   write(*,*) '-----------------------------------------'
   write(*,*) 'Erreur theorique attendu :'
