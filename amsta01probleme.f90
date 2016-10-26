@@ -87,6 +87,7 @@ module amsta01probleme
       nt=pb%mesh%nbTri
 
       do i=1,nt
+
         s=pb%mesh%triVertices(i,1:3)
         s1=pb%mesh%coords(s(1),1:2)
         s2=pb%mesh%coords(s(2),1:2)
@@ -231,8 +232,8 @@ module amsta01probleme
 
       ! Variables locales
       type(matsparse)                       :: N, M_inv    ! Matrice N et inverse de M avec K=M-N
-      real(kind=8), dimension(:), pointer   :: rk, uk      ! Itere de la solution et residu 
-      real(kind=8)                          :: norm        ! Norme du residu 
+      real(kind=8), dimension(:), pointer   :: rk, uk      ! Itere de la solution et residu
+      real(kind=8)                          :: norm        ! Norme du residu
       integer                               :: n_size,i,k  ! Taille probleme et variables boucles
 
 
@@ -299,7 +300,7 @@ module amsta01probleme
 
 
 
-    ! Calcul de la solution par algorithme de Gauss-Seidel 
+    ! Calcul de la solution par algorithme de Gauss-Seidel
     subroutine solveGaussSeidel(pb, eps, conv)
 
       implicit none
@@ -323,7 +324,7 @@ module amsta01probleme
       ! On alloue les valeurs des vecteurs solution et residu
       allocate(uk(n_size), rk(n_size))
 
-      ! Definition des matrices M et N. Attention K = M - N ! 
+      ! Definition des matrices M et N. Attention K = M - N !
       N = spmatscal(-1.d0, extract(pb%p_Kelim, pb%p_Kelim%i < pb%p_Kelim%j))
       M = extract(pb%p_Kelim, pb%p_Kelim%i >= pb%p_Kelim%j)
 
@@ -364,13 +365,12 @@ module amsta01probleme
 
       ! On desallocate les matrice creees
       deallocate(uk,rk)
-      
+
     end subroutine solveGaussSeidel
-    
-    
-    
-    
-    
+
+
+
+
     ! export de la solution au format vtu pour Paraview
     !     mesh : mailllage
     !     sol : vecteur solution

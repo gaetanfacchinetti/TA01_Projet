@@ -1,11 +1,11 @@
 program main
-  
+
   use amsta01maillage
   use amsta01sparse
   use amsta01probleme
 
   implicit none
-  
+
   type(maillage)     :: mail
   type(probleme)     :: pb
   type(matsparse)    :: Kt, Mt
@@ -17,21 +17,16 @@ program main
   write(*,*)
   write(*,*) '  **** TA01 Equation de la chaleur ****  '
 
-
-  
-
-
- 
   write(*,*)
   write(*,*) '-----------------------------------------'
-  write(*,*) 'Proprietes du maillage :' 
- 
+  write(*,*) 'Proprietes du maillage :'
+
   ! lecture du maillage
-  mail = loadFromMshFile("./essaiGmsh.msh",3)
+  mail = loadFromMshFile("./testpart.msh",2)
   ! Affichage des données des noeuds
    call affichePart(mail)
   ! construction des donnees sur les triangles
-  call getTriangles(mail)
+  call getTriangles(mail,2)
   ! creation du probleme
   call loadFromMesh(pb,mail)
   ! assemblage des matrices elements finis
@@ -42,7 +37,7 @@ program main
 
   write(*,*) '-----------------------------------------'
   write(*,*) 'Erreur theorique attendu :'
-  
+
   ! calcul du residu theorique
   allocate(residu(mail%nbNodes))
   residu=pb%felim-pb%p_Kelim*pb%uexa
@@ -52,13 +47,13 @@ program main
 
   write(*,*) '-----------------------------------------'
   write(*,*) 'Resolution du systeme lineaire : '
-  
+
   ! Resolution par jacobi
   ! call solveJacobi(pb, 0.000001, conv)
-  
+
   ! Resolution par Gauss Seidel
   call solveGaussSeidel(pb, 0.000001, conv)
-  
+
   ! Si on n'a pas converge on utilise une methode directe
   if (conv .eqv. .FALSE.) then
      ! resolution du systeme lineaire
@@ -70,7 +65,7 @@ program main
 
   write(*,*) '-----------------------------------------'
   write(*,*) 'Calcul du residu reel et de l erreur :'
-  
+
   ! calcul du residu
   residu=pb%felim-pb%p_Kelim*pb%u
   erreur=dsqrt(dot_product(residu,residu))
@@ -87,5 +82,5 @@ program main
 
   ! sauvegarde de la solution et de la solution theorique
   call saveToVtu(pb%mesh,pb%u,pb%uexa)
-  
+
 end program
