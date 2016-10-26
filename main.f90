@@ -13,6 +13,7 @@ program main
   real(kind=8)                         :: erreur
   real(kind=8), dimension(:), pointer  :: residu
   logical                              :: conv
+  integer                              :: nbSsDomaine 
 
   ! Variables MPI
   integer                              :: nbTask, myRank, ierr, req
@@ -23,30 +24,47 @@ program main
   call MPI_COMM_SIZE(MPI_COMM_WORLD, nbTask, ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, myRank, ierr)
 
+  ! Nombre de partitions dans le mailage
+  nbSsDomaine = 3
 
-  write(*,*)
-  write(*,*) '  **** TA01 Equation de la chaleur ****  '
+  if (myRank == 0) then 
+  
+     write(*,*)
+     write(*,*) '  **** TA01 Equation de la chaleur ****  '
 
-  write(*,*)
-  write(*,*) '-----------------------------------------'
-  write(*,*) 'Proprietes du maillage :'
+     write(*,*)
+     write(*,*) '-----------------------------------------'
+     write(*,*) 'Proprietes du maillage :'
+     
+  end if
 
   ! lecture du maillage
-  mail = loadFromMshFile("./testpart.msh",2)
-  ! Affichage des données des noeuds
-  ! call affichePart(mail)
+  mail = loadFromMshFile("./essaiGmsh.msh", myRank, nbSsDomaine)
+  
   ! construction des donnees sur les triangles
-  call getTriangles(mail,2,myRank)
-  ! creation du probleme
+  call getTriangles(mail, myRank, nbSsDomaine)
+
+  ! Affichage des données des noeuds et des elements
+  if(myRank == 0) call affichePartNoeud(mail, "infoNoeuds.log")
+  if(myRank == 0) call affichePartElem(mail, "infoElems.log")
+  call affichePartTri(mail, "infoTris.log", myRank)
+  
+  
+  ! creation des problemes
   call loadFromMesh(pb,mail)
+  
   ! assemblage des matrices elements finis
   call assemblage(pb)
+  
   ! pseudo-elimination des conditions essentielles
   call pelim(pb,mail%refNodes(1))
 
+  STOP "Arret du programme"
 
-  write(*,*) '-----------------------------------------'
-  write(*,*) 'Erreur theorique attendu :'
+  if (myRank == 0) then 
+     write(*,*) '-----------------------------------------'
+     write(*,*) 'Erreur theorique attendu :'
+  end if 
 
   ! calcul du residu theorique
   allocate(residu(mail%nbNodes))

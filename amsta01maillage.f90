@@ -4,12 +4,6 @@
 ! Auteur : N. Kielbasiewicz
 ! -----------------------------------------------------------------
 
-! INFO
-! elemPartRef contient les sous domaines que l'element touche
-! elemNbPart contient le nombre d'info dans elemPartRef
-! RefPartNode contient la valeur du sous domaine auquel le noeud considere appartient
-
-
 module amsta01maillage
 
   ! A utiliser peut être pour definir refPartNodes
@@ -21,7 +15,7 @@ module amsta01maillage
     integer :: nbNodes, nbElems, nbTri
     real(kind=8), dimension(:,:), pointer :: coords
     integer, dimension(:,:), pointer :: typeElems, elemsVertices, triVertices, elemsPartRef, triPartRef
-    integer, dimension(:), pointer :: refNodes, refElems, refTri, elemsNbPart, triNbPart, refPartNodes
+    integer, dimension(:), pointer :: refNodes, refElems, refTri, elemsNbPart, triNbPart, refPartNodes, tri2elem
   end type
 
 
@@ -45,11 +39,12 @@ module amsta01maillage
 
 
     ! construit un maillage par lecture d'un fichier gmsh
-    function loadFromMshFile(filename, nbSsD) result(res)
+    function loadFromMshFile(filename, myRank, nbSsD) result(res)
 
       implicit none
 
       character(len=*), intent(in)    :: filename
+      integer, intent(in)             :: myRank
       integer, optional, intent(in)   :: nbSsD            ! Nombre de sous domaines crees ous GMSH
       integer                         :: nbSsDomaine
       type(maillage) :: res
@@ -89,7 +84,7 @@ module amsta01maillage
         else if (sbuf =="$Nodes") then
           ! read number of nodes
           read(10,*, iostat=ios) res%nbNodes
-          print*, "nbNodes=",res%nbNodes
+          if(myRank == 0) print*, "nbNodes=",res%nbNodes
           allocate(res%coords(res%nbNodes,3), res%refNodes(res%nbNodes))
           res%refNodes=0
           ! read coordinates
@@ -105,7 +100,7 @@ module amsta01maillage
 
         else if (sbuf =="$Elements") then
           read(10,*, iostat=ios) res%nbElems
-          print*, "nbElems=",res%nbElems
+          if(myRank == 0) print*, "nbElems=",res%nbElems
 
           allocate(res%typeElems(res%nbElems,2), res%refElems(res%nbElems), res%elemsVertices(res%nbElems,3))
           allocate(res%elemsPartRef(res%nbElems,nbSsDomaine), res%refPartNodes(res%nbNodes))
@@ -199,26 +194,6 @@ module amsta01maillage
 
 
 
-    ! Affiche les references des noeuds
-    subroutine affichePart(mail)
-
-      implicit none
-
-      type(maillage), intent(in) :: mail
-      ! character(len=*), intent(in) :: filename
-      integer    :: j
-
-      ! open(unit=11, file=filename, form=
-
-      do j=1,mail%nbNodes
-         write(*,*) 'Noeud numero : ', j, ' | RefNodes : ', mail%refNodes(j), ' |  RefPartNodes : ', mail%refPartNodes(j)
-      end do
-
-    end subroutine affichePart
-
-
-
-
 
 
 
@@ -230,7 +205,8 @@ module amsta01maillage
       type(maillage), intent(inout)   :: mail
       integer, optional, intent(in)   :: nbSsD
       integer, intent(in)             :: myRank
-      integer                         :: i, j,k, nbTri, nbSsDomaine
+      integer                         :: i, j, k, nbTri_tot, nbSsDomaine
+ 
 
 
       ! Initialisation du nombre de sous domaines
@@ -240,61 +216,243 @@ module amsta01maillage
          nbSsDomaine = 2
       end if
 
-      nbTri=0
+
+      nbTri_tot   = count(mail%typeElems(:,1) == 2)
+      mail%nbTri  = nbTri_tot
+      if(myRank == 0) Print*, "NbTri (total) =", mail%nbTri
+
+      allocate(mail%refTri(mail%nbTri), mail%triPartRef(mail%nbTri,nbSsDomaine))
+      allocate(mail%triNbPart(mail%nbTri), mail%tri2elem(mail%nbTri))
 
 
-      do i=1, mail%nbElems
-        if (mail%typeElems(i,1) == 2) then
-          nbTri=nbTri+1
-        end if
-      end do
-      mail%nbTri=nbTri
-      Print*, "NbTri=", NbTri
-
-      allocate(mail%refTri(nbTri), mail%triPartRef(nbTri,nbSsDomaine))
-      allocate(mail%triNbPart(nbTri))
-
+      ! Initialisation du tableau de partition des triangles a 0
       mail%triPartRef = 0
       j = 1
 
-      do i=1,mail%nbElems
-        if (mail%typeElems(i,1) == 2) then
+      ! Identification des triangles parmis les elements
+      boucle_identification_triangle : do i=1,mail%nbElems
+         
+         condition_est_un_triangle : if (mail%typeElems(i,1) == 2) then
+            
           mail%triNbPart(j) = mail%elemsNbpart(i)
           mail%refTri(j)=mail%refElems(i)
-          ! mail%triVertices(j,1:3)=mail%elemsVertices(i,1:3)
           mail%triPartRef(j,1:mail%triNbPart(j)) = mail%elemsPartRef(i,1:mail%elemsNbPart(i))
+          mail%tri2elem(j) = i
           j=j+1
-        end if
-     end do
+          
+       end if condition_est_un_triangle
+       
+     end do boucle_identification_triangle
 
+     !! Note ---------
+     ! Le tableau tri2elem est un tableau qui permet lorsque l'on connait l'identifiant d'un
+     ! triangle de remonter a l'identifiant de l'element associe. Dans la boucle precedente
+     ! le triangle j correspond a l'element numerote i. Ceci nous fait stocker un tableau de
+     ! plus mais ce n'est qu'un vecteur et il simplifie les choses considerablement ensuite.
+     !! --------------
 
-
-
-     mail%nbTri = count(mail%triPartRef(:,1)==myRank)
+     
+     ! On change la variable nbTri pour quelle corresponde a ce qu'elle vaudra
+     ! non plus au global mais sur chaque processeur consideres et on alloue
+     ! le tableau des identifiants des sommets des triangles du processeur
+     ! en fonction de cette variable
+     mail%nbTri = count(mail%triPartRef(:,1) == myRank)
      allocate(mail%triVertices(mail%nbTri,3))
 
      j = 1
 
-     do i=1,mail%nbElems
-        if (mail%typeElems(i,1) == 2) then
-           if (mail%triPartRef(j,1) == myRank) then
-              mail%triVertices(j,1:3) = mail%elemsVertices(i,1:3)
-              j = j+1
-           end if
+     ! Recuperation des identifiants des somments 
+     boucle_triVertices_proc_myRank : do i=1,nbTri_tot
+        if (mail%triPartRef(i,1) == myRank) then
+           mail%triVertices(j,1:3) = mail%elemsVertices(mail%tri2elem(i),1:3)
+           j=j+1
         end if
-
-     end do
-
+     end do boucle_triVertices_proc_myRank
 
 
+     
+     condition_rank_0 : if (myRank == 0) then
 
+        ! Initialisation du nombre de triangles pour le processeur 0 a 0
+        mail%nbTri = 0
 
+        ! Recuperation du nombre de triangles touchant l'interface
+        do i=1,nbTri_tot
+           ! On compte le nombre de triangle ayant au moins un noeud touchant le bord
+           mail%nbTri = mail%nbTri + &
+                min(count(mail%refPartNodes(mail%elemsVertices(mail%tri2elem(i),:))==0),1)
+        end do
+        
+        ! Allocation de la matrice triVertices pour le processeur 0
+        allocate(mail%triVertices(mail%nbTri,3))
 
+        k = 1
 
+        ! Attribution des numeros des sommets en fonction des numeros des elements
+        do i = 1,nbTri_tot
+           do j=1,3
+              ! On regarde si l'un des noeuds associe a un refPartNodes de 0 (i.e. il est sur l'interface)
+              if (mail%refPartNodes(mail%elemsVertices(mail%tri2elem(i),j))==0) then
+                 mail%triVertices(k,1:3) = mail%elemsVertices(mail%tri2elem(i),1:3)
+                 k = k+1
+                 ! Une fois que le triangel a ete attribue a cause de l'un de ces sommets on sort
+                 ! Ceci pour ne pas compter deux fois un meme triangle
+                 exit 
+              end if
+           end do
+        end do
+        
+     end if condition_rank_0
 
-
+     
     end subroutine getTriangles
 
 
 
+
+
+
+
+
+
+
+
+
+
+    
+
+
+    !! -------------------------------------------------------------- !!
+    !! Subroutines d'affichage
+    !! -------------------------------------------------------------- !!
+    
+
+
+    ! Affiche les references des noeuds
+    subroutine affichePartNoeud(mail, filename)
+
+      implicit none
+
+      type(maillage), intent(in) :: mail
+      character(len=*), intent(in) :: filename
+      integer    :: j
+
+      
+      open(unit=11, file=filename, form="formatted")
+
+      write(11,*) '!!!! -------- Info Noeuds -------- !!!!'
+      write(11,*)
+      write(11,*) 'Il y a ', mail%nbNodes, ' noeuds'
+      write(11,*)
+
+      do j=1,mail%nbNodes
+         write(11,*) 'Noeud numero : ', j, ' | RefNodes : ', &
+              mail%refNodes(j), ' |  RefPartNodes : ', mail%refPartNodes(j)
+      end do
+
+      close(11)
+
+      
+    end subroutine affichePartNoeud
+
+
+    
+
+
+    
+    ! Affiche les references des noeuds
+    subroutine affichePartElem(mail, filename)
+
+      implicit none
+
+      type(maillage), intent(in) :: mail
+      character(len=*), intent(in) :: filename
+      integer    :: j
+
+      
+      open(unit=12, file=filename, form="formatted")
+
+      write(12,*) '!!!! -------- Info elems -------- !!!!'
+      write(12,*)
+      write(12,*) 'Il y a ', mail%nbElems, ' elems'
+      write(12,*)
+
+      do j=1,mail%nbElems
+         write(12,*) 'Element numero : ', j, ' | RefElems : ', &
+              mail%refElems(j), ' |  RefPartElems : ', mail%elemsPartRef(j,:), &
+              '| Type d element : ', mail%typeElems(j,1)
+      end do
+
+      close(12)
+
+      
+    end subroutine affichePartElem
+
+
+
+    
+
+    
+    ! Affiche les references des noeuds
+    subroutine affichePartTri(mail, filename, myRank)
+
+      implicit none
+
+      type(maillage), intent(in)     :: mail
+      character(len=*), intent(in)   :: filename
+      integer, intent(in)            :: myRank
+      character(len=100)             :: filename_bis, filename_tris
+      character(len=2)               :: str_rank
+      integer, dimension(2)          :: nb_tri
+      integer    :: j, k
+
+      write(str_rank, '(I1.1)') myRank
+
+      k = index(filename, '.log')
+      filename_bis  = trim(filename(1:k-1)//'_proc_'//trim(str_rank)//'.log')
+      filename_tris = trim(filename(1:k-1)//'_total_.log')
+      
+      
+      open(unit=14, file=filename_bis, form="formatted")
+
+      write(14,*) '!!!! -------- Info tris  -------- !!!!'
+      write(14,*)
+      write(14,*) 'Il y a ', mail%nbTri, ' triangles pour le proc ', myRank
+      write(14,*)
+
+      do j=1,mail%nbTri
+         write(14,*) 'Triangle ''numero'' : ', j, ' | triVertices : ', &
+              mail%triVertices(j,:)
+      end do
+
+      close(14)
+
+
+      if (myRank == 0) then
+         
+         open(unit=15, file=filename_tris, form="formatted")
+
+         nb_tri = shape(mail%triPartRef) 
+         
+         write(15,*) '!!!! -------- Info tris  -------- !!!!'
+         write(15,*)
+         write(15,*) 'Il y a ', nb_tri(1), ' triangles au total'
+         write(15,*)
+
+         do j=1,nb_tri(1)
+            write(15,*) 'Triangle numero : ', mail%tri2elem(j), ' | triPartRef : ', &
+                 mail%triPartRef(j,:)
+         end do
+
+         close(15)
+
+      end if
+      
+      
+    end subroutine affichePartTri
+    
+
+
+
+    
 end module amsta01maillage
