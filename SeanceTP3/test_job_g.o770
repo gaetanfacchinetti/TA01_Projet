@@ -1,0 +1,11 @@
+Warning: no access to tty (Bad file descriptor).
+Thus no job control in this shell.
+Currently Loaded Modulefiles:
+  1) openmpi/1.8.8   2) hwloc/1.11.0
+ N=           1000000000 , sum_pi=            785407357
+ Approx pi =    3.14162946    
+ (pi_approx-pi)/pi=   1.16872125E-05
+time in seconds: 10.101464
+Writing logfile....
+Enabling the Default clock synchronization...
+Finished writing logfile Unknown.clog2.

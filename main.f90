@@ -3,15 +3,25 @@ program main
   use amsta01maillage
   use amsta01sparse
   use amsta01probleme
+  use mpi
 
   implicit none
 
-  type(maillage)     :: mail
-  type(probleme)     :: pb
-  type(matsparse)    :: Kt, Mt
-  real(kind=8)       :: erreur
-  real(kind=8), dimension(:), pointer :: residu
-  logical            :: conv   ! Indique s'il y a eu convergence pour les methodes iteratives
+  type(maillage)                       :: mail
+  type(probleme)                       :: pb
+  type(matsparse)                      :: Kt, Mt
+  real(kind=8)                         :: erreur
+  real(kind=8), dimension(:), pointer  :: residu
+  logical                              :: conv
+
+  ! Variables MPI
+  integer                              :: nbTask, myRank, ierr, req
+  integer, dimension(MPI_STATUS_SIZE)  :: status
+
+  call MPI_INIT(ierr)
+
+  call MPI_COMM_SIZE(MPI_COMM_WORLD, nbTask, ierr)
+  call MPI_COMM_RANK(MPI_COMM_WORLD, myRank, ierr)
 
 
   write(*,*)
@@ -24,9 +34,9 @@ program main
   ! lecture du maillage
   mail = loadFromMshFile("./testpart.msh",2)
   ! Affichage des données des noeuds
-   call affichePart(mail)
+  ! call affichePart(mail)
   ! construction des donnees sur les triangles
-  call getTriangles(mail,2)
+  call getTriangles(mail,2,myRank)
   ! creation du probleme
   call loadFromMesh(pb,mail)
   ! assemblage des matrices elements finis
@@ -82,5 +92,7 @@ program main
 
   ! sauvegarde de la solution et de la solution theorique
   call saveToVtu(pb%mesh,pb%u,pb%uexa)
+
+  call MPI_FINALIZE(ierr)
 
 end program

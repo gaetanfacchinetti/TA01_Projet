@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+#  Name of the job (used to build the name of the standard output stream)
+#$ -N test_job_g
+#
+#  Number of MPI task requested
+#$ -pe orte 8
+#
+#  The job is located in the current working directory
+#$ -cwd
+#
+#  Merge standard error and standard output streams
+#$ -j y
+#
+
+module use /share/apps/TA01/modulefiles
+module unload rocks-openmpi
+module load openmpi
+module load hwloc
+module list
+
+mpirun ./compute_pi 1000000000

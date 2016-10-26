@@ -1,5 +1,5 @@
 GFORTRAN module version '9' created from amsta01maillage.f90
-MD5:056a37a90cebb89a89d556c7db74a741 -- If you edit this, you'll get what you deserve.
+MD5:1591ca13578e7486b0e9105bb2e9361b -- If you edit this, you'll get what you deserve.
 
 (() () () () () () () () () () () () () () () () () () () () () () () ()
 () () ())
@@ -60,34 +60,36 @@ UNKNOWN-PROC UNKNOWN UNKNOWN 0 0) (UNKNOWN 0 0 0 0 UNKNOWN ()) 0 0 () ()
 0 () () () 0 0)
 22 'gettriangles' 'amsta01maillage' '' 1 ((PROCEDURE UNKNOWN-INTENT
 MODULE-PROC DECL UNKNOWN 0 0 SUBROUTINE ALWAYS_EXPLICIT) (UNKNOWN 0 0 0
-0 UNKNOWN ()) 23 0 (24 25) () 0 () () () 0 0)
-26 'loadfrommshfile' 'amsta01maillage' '' 1 ((PROCEDURE UNKNOWN-INTENT
+0 UNKNOWN ()) 23 0 (24 25 26) () 0 () () () 0 0)
+27 'loadfrommshfile' 'amsta01maillage' '' 1 ((PROCEDURE UNKNOWN-INTENT
 MODULE-PROC DECL UNKNOWN 0 0 FUNCTION ALWAYS_EXPLICIT) (DERIVED 2 0 0 0
-DERIVED ()) 27 0 (28 29) () 30 () () () 0 0)
-31 'maillage' 'amsta01maillage' '' 1 ((PROCEDURE UNKNOWN-INTENT
+DERIVED ()) 28 0 (29 30) () 31 () () () 0 0)
+32 'maillage' 'amsta01maillage' '' 1 ((PROCEDURE UNKNOWN-INTENT
 UNKNOWN-PROC DECL UNKNOWN 0 0 FUNCTION GENERIC) (UNKNOWN 0 0 0 0 UNKNOWN
 ()) 0 0 () () 0 () () () 0 0)
-32 'type2nbnodes' 'amsta01maillage' '' 1 ((PROCEDURE UNKNOWN-INTENT
+33 'type2nbnodes' 'amsta01maillage' '' 1 ((PROCEDURE UNKNOWN-INTENT
 MODULE-PROC DECL UNKNOWN 0 0 FUNCTION IMPLICIT_PURE) (INTEGER 4 0 0 0
-INTEGER ()) 33 0 (34) () 35 () () () 0 0)
-34 't' '' '' 33 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0 DUMMY) (
+INTEGER ()) 34 0 (35) () 36 () () () 0 0)
+35 't' '' '' 34 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0 DUMMY) (
 INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-35 'tt' '' '' 33 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
+36 'tt' '' '' 34 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
 0 0 RESULT) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-28 'filename' '' '' 27 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
+29 'filename' '' '' 28 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
 DUMMY) (CHARACTER 1 0 0 0 CHARACTER (())) 0 0 () () 0 () () () 0 0)
-29 'nbssd' '' '' 27 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
+30 'nbssd' '' '' 28 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
 OPTIONAL DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
-30 'res' '' '' 27 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
+31 'res' '' '' 28 ((VARIABLE UNKNOWN-INTENT UNKNOWN-PROC UNKNOWN UNKNOWN
 0 0 RESULT ALWAYS_EXPLICIT) (DERIVED 2 0 0 0 DERIVED ()) 0 0 () () 0 ()
 () () 0 0)
 20 'mail' '' '' 19 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0 DUMMY)
 (DERIVED 2 0 0 0 DERIVED ()) 0 0 () () 0 () () () 0 0)
 24 'mail' '' '' 23 ((VARIABLE INOUT UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
 DUMMY) (DERIVED 2 0 0 0 DERIVED ()) 0 0 () () 0 () () () 0 0)
-25 'nbssd' '' '' 23 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
+25 'myrank' '' '' 23 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
+DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
+26 'nbssd' '' '' 23 ((VARIABLE IN UNKNOWN-PROC UNKNOWN UNKNOWN 0 0
 OPTIONAL DUMMY) (INTEGER 4 0 0 0 INTEGER ()) 0 0 () () 0 () () () 0 0)
 )
 
 ('Maillage' 0 2 'affichepart' 0 18 'amsta01maillage' 0 21 'gettriangles'
-0 22 'loadfrommshfile' 0 26 'maillage' 0 31 'type2nbnodes' 0 32)
+0 22 'loadfrommshfile' 0 27 'maillage' 0 32 'type2nbnodes' 0 33)

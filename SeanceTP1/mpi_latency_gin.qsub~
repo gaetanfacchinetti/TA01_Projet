@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+#  Name of the job (used to build the name of the standard output stream)
+#$ -N measure_latency_by_core
+#
+#  Number of MPI task requested
+#$ -pe orte 32
+#
+#  The job is located in the current working directory
+#$ -cwd
+#
+#  Merge standard error and standard output streams
+#$ -j y
+#
+
+module unload rocks-openmpi
+module use /share/apps/TA01/modulefiles
+module load openmpi
+module list
+
+
+
+# by core
+mpirun -map-by core -bind-to core -report-bindings ./mpi_latency 
+
+# by socket
+#mpirun -map-by socket -bind-to core -report-bindings ./mpi_latency
+
+# by node
+mpirun -bind-to core -report-bindings ./mpi_latency
+

@@ -223,13 +223,14 @@ module amsta01maillage
 
 
     ! construit la liste des triangles du maillage
-    subroutine getTriangles(mail, nbSsD)
+    subroutine getTriangles(mail, myRank, nbSsD)
 
       implicit none
 
-      type(maillage), intent(inout) :: mail
+      type(maillage), intent(inout)   :: mail
       integer, optional, intent(in)   :: nbSsD
-      integer :: i, j, nbTri, nbSsDomaine
+      integer, intent(in)             :: myRank
+      integer                         :: i, j,k, nbTri, nbSsDomaine
 
 
       ! Initialisation du nombre de sous domaines
@@ -250,24 +251,52 @@ module amsta01maillage
       mail%nbTri=nbTri
       Print*, "NbTri=", NbTri
 
-      allocate(mail%refTri(nbTri), mail%triVertices(nbTri,3), mail%triPartRef(nbTri,nbSsDomaine))
+      allocate(mail%refTri(nbTri), mail%triPartRef(nbTri,nbSsDomaine))
       allocate(mail%triNbPart(nbTri))
 
       mail%triPartRef = 0
       j = 1
 
-      do i=1, mail%nbElems
+      do i=1,mail%nbElems
         if (mail%typeElems(i,1) == 2) then
           mail%triNbPart(j) = mail%elemsNbpart(i)
           mail%refTri(j)=mail%refElems(i)
-          mail%triVertices(j,1:3)=mail%elemsVertices(i,1:3)
+          ! mail%triVertices(j,1:3)=mail%elemsVertices(i,1:3)
           mail%triPartRef(j,1:mail%triNbPart(j)) = mail%elemsPartRef(i,1:mail%elemsNbPart(i))
           j=j+1
         end if
-      end do
+     end do
 
 
 
+     if (myRank == k) then
+
+        nbTri = count(mail%triPartRef(:,1)==myRank)
+        allocate(mail%triVertices(nbTri,3))
+
+        j = 1
+
+        do i=1,mail%nbElems
+           if (mail%typeElems(i,1) == 2) then
+              if (mail%triPartRef(j,1) == myRank) then
+                 mail%triVertices(j,1:3) = mail%elemsVertices(i,1:3)
+                 j = j+1
+              end if
+           end if
+
+        end do
+
+        mail%nbTri = nbTri
+
+     end if
+
+
+
+
+     !if (myRank == nbSsDomaine+1) then
+        
+
+     !end if
 
 
     end subroutine getTriangles
