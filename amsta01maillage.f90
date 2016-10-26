@@ -269,34 +269,28 @@ module amsta01maillage
 
 
 
-     if (myRank == k) then
 
-        nbTri = count(mail%triPartRef(:,1)==myRank)
-        allocate(mail%triVertices(nbTri,3))
+     mail%nbTri = count(mail%triPartRef(:,1)==myRank)
+     allocate(mail%triVertices(mail%nbTri,3))
 
-        j = 1
+     j = 1
 
-        do i=1,mail%nbElems
-           if (mail%typeElems(i,1) == 2) then
-              if (mail%triPartRef(j,1) == myRank) then
-                 mail%triVertices(j,1:3) = mail%elemsVertices(i,1:3)
-                 j = j+1
-              end if
+     do i=1,mail%nbElems
+        if (mail%typeElems(i,1) == 2) then
+           if (mail%triPartRef(j,1) == myRank) then
+              mail%triVertices(j,1:3) = mail%elemsVertices(i,1:3)
+              j = j+1
            end if
+        end if
 
-        end do
-
-        mail%nbTri = nbTri
-
-     end if
+     end do
 
 
 
 
-     !if (myRank == nbSsDomaine+1) then
-        
 
-     !end if
+
+
 
 
     end subroutine getTriangles
