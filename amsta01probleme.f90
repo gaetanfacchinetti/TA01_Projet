@@ -58,10 +58,10 @@ module amsta01probleme
         y=pb%mesh%coords(i,2)
 
         ! pb%uexa(i)=pb%mesh%coords(i,1) ! Test 1
-        pb%uexa(i) = x*(6-x)*y*(2-y)
+        pb%uexa(i) = exp((x+y)/8)
 
         ! -f est la fonction égale au laplacien
-        pb%f(i) = 2*(x*(6-x)+y*(2-y))
+        pb%f(i) = exp((x+y)/8)/16
 
         ! g est la restruction de uexa sur le bord
         if (pb%mesh%refNodes(i) == pb%mesh%refNodes(1) ) then
@@ -76,8 +76,12 @@ module amsta01probleme
 
 
     ! assemblage des matrices de rigidité et de masse, et du second membre
-    subroutine assemblage(pb)
+    subroutine assemblage(pb, myRank)
+
+      implicit none
+
       type(probleme), intent(inout) :: pb
+      integer, intent(in) :: myRank
       real(kind=8), dimension(2) :: s1,s2,s3
       integer, dimension(3) :: s
       real(kind=8), dimension(9) :: kel, mel
@@ -86,22 +90,24 @@ module amsta01probleme
 
       nt=pb%mesh%nbTri
 
+      write(*,*) 'nt = ', nt
+
       do i=1,nt
 
-        s=pb%mesh%triVertices(i,1:3)
-        s1=pb%mesh%coords(s(1),1:2)
-        s2=pb%mesh%coords(s(2),1:2)
-        s3=pb%mesh%coords(s(3),1:2)
+         s=pb%mesh%triVertices(i,1:3)
+         s1=pb%mesh%coords(s(1),1:2)
+         s2=pb%mesh%coords(s(2),1:2)
+         s3=pb%mesh%coords(s(3),1:2)
 
-        kel=kelem(s1,s2,s3)
-        mel=melem(s1,s2,s3)
+         kel=kelem(s1,s2,s3)
+         mel=melem(s1,s2,s3)
 
-        do j=1,3
-          do k=1,3
-            call addtocoeff(pb%p_K,s(j),s(k),kel(3*(j-1)+k))
-            call addtocoeff(pb%p_M,s(j),s(k),mel(3*(j-1)+k))
-          end do
-        end do
+         do j=1,3
+            do k=1,3
+               call addtocoeff(pb%p_K,s(j),s(k),kel(3*(j-1)+k))
+               call addtocoeff(pb%p_M,s(j),s(k),mel(3*(j-1)+k))
+            end do
+         end do
       end do
 
       call sort(pb%p_K)
@@ -125,6 +131,9 @@ module amsta01probleme
       integer :: n, nn, i, ii, j
       real(kind=8) :: val
 
+      write(*,*) 'Taille de p_K : ', pb%p_K%n, pb%p_K%m
+      write(*,*) 'Taille de g   : ', size(pb%g)
+
       pb%felim=pb%f-spmatvec(pb%p_K,pb%g)
       pb%p_Kelim=pb%p_K
 
@@ -134,12 +143,12 @@ module amsta01probleme
       indelim=pack((/ (i, i=1,n) /),pb%mesh%refNodes == id)
 
       do ii=1,nn
-        i=indelim(ii)
-        val=coeff(pb%p_K,i,i)
-        pb%felim(i)=pb%g(i)*val
-        do j=1,n
-          if (j /= i) then
-            call delcoeff(pb%p_Kelim,i,j)
+         i=indelim(ii)
+         val=coeff(pb%p_K,i,i)
+         pb%felim(i)=pb%g(i)*val
+         do j=1,n
+            if (j /= i) then
+               call delcoeff(pb%p_Kelim,i,j)
             call delcoeff(pb%p_Kelim,j,i)
           end if
         end do
@@ -174,6 +183,7 @@ module amsta01probleme
       kel(7)=kel(3)
       kel(8)=kel(6)
       kel(9)=(x12*x12+y12*y12)/a
+
     end function kelem
 
 
@@ -221,7 +231,7 @@ module amsta01probleme
 
 
     ! calcul de la solution du problème par Jacobi
-    subroutine solveJacobi(pb, eps, conv)
+    subroutine solveJacobi(pb, eps, conv, myRank)
 
       implicit none
 
@@ -229,6 +239,7 @@ module amsta01probleme
       type(probleme), intent(inout) :: pb         ! Probleme que l'on cherche a resoudre
       real, intent(in)              :: eps        ! Critere de convergence pour la methode
       logical, intent(out)          :: conv       ! Logique permettant de savoir si on a converge
+      integer, intent(in)           :: myRank
 
       ! Variables locales
       type(matsparse)                       :: N, M_inv    ! Matrice N et inverse de M avec K=M-N
@@ -252,12 +263,12 @@ module amsta01probleme
 
       ! Ajout et suppresion de leurs coefficients
       do i = 1,n_size
-
          ! Donne la valeur de l'inverse de la diagonale
-         call setcoeff(M_inv,i,i,(1.0d0)/(coeff(pb%p_Kelim, i,i)))
-
+         if(coeff(pb%p_Kelim, i,i) /= 0) call setcoeff(M_inv,i,i,(1.0d0)/(coeff(pb%p_Kelim, i,i)))
       end do
 
+
+      ! if(myRank == 0) call affiche(pb%p_Kelim)
 
       ! Initialisation du vecteur solution
       uk = 1.d0
@@ -271,11 +282,12 @@ module amsta01probleme
 
          ! Calcul de la norme de du residu pour observer la convergence
          ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ?
-         if (mod(k,10) == 0) then
+         ! if (mod(k,10) == 0) then
 
             ! Calcul de residu et de la norme
             rk = spmatvec(pb%p_Kelim, uk) - pb%felim
             norm = dsqrt(dot_product(rk, rk))
+
 
             ! Si jamais on a atteint le critère de convergence on sort de la boucle
             if (norm < eps) then
@@ -286,7 +298,7 @@ module amsta01probleme
                exit
             end if
 
-         end if
+          !end if
       end do
 
       ! On donne a la solution la valeur du dernier itere
@@ -296,6 +308,8 @@ module amsta01probleme
       deallocate(uk,rk)
 
     end subroutine solveJacobi
+
+
 
 
 
@@ -342,10 +356,10 @@ module amsta01probleme
 
          ! Calcul de la norme de du residu pour observer la convergence
          ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ?
-         if (mod(k,10) == 0) then
+          if (mod(k,10) == 0) then
 
             ! Calcul de residu et de la norme
-            rk = spmatvec(pb%p_Kelim, uk) - pb%felim
+            rk = pb%felim - spmatvec(pb%p_Kelim, uk)
             norm = dsqrt(dot_product(rk, rk))
 
             ! Si jamais on a atteint le critère de convergence on sort de la boucle
@@ -356,7 +370,7 @@ module amsta01probleme
                exit
             end if
 
-         end if
+          end if
       end do
 
 
@@ -378,6 +392,9 @@ module amsta01probleme
     !     fname : nom du fichier de sortie (optionel)
     !             le nom doit contenir l'extension .vtu
     subroutine saveToVtu(mesh, sol, solexa, fname)
+
+      implicit none
+
       type(maillage), intent(in) :: mesh
       real(kind=8), dimension(mesh%nbNodes), intent(in) :: sol, solexa
       character(len=*), intent(in), optional :: fname

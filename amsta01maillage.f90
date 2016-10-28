@@ -206,7 +206,7 @@ module amsta01maillage
       integer, optional, intent(in)   :: nbSsD
       integer, intent(in)             :: myRank
       integer                         :: i, j, k, nbTri_tot, nbSsDomaine
- 
+
 
 
       ! Initialisation du nombre de sous domaines
@@ -231,17 +231,17 @@ module amsta01maillage
 
       ! Identification des triangles parmis les elements
       boucle_identification_triangle : do i=1,mail%nbElems
-         
+
          condition_est_un_triangle : if (mail%typeElems(i,1) == 2) then
-            
+
           mail%triNbPart(j) = mail%elemsNbpart(i)
           mail%refTri(j)=mail%refElems(i)
           mail%triPartRef(j,1:mail%triNbPart(j)) = mail%elemsPartRef(i,1:mail%elemsNbPart(i))
           mail%tri2elem(j) = i
           j=j+1
-          
+
        end if condition_est_un_triangle
-       
+
      end do boucle_identification_triangle
 
      !! Note ---------
@@ -251,7 +251,7 @@ module amsta01maillage
      ! plus mais ce n'est qu'un vecteur et il simplifie les choses considerablement ensuite.
      !! --------------
 
-     
+
      ! On change la variable nbTri pour quelle corresponde a ce qu'elle vaudra
      ! non plus au global mais sur chaque processeur consideres et on alloue
      ! le tableau des identifiants des sommets des triangles du processeur
@@ -261,7 +261,7 @@ module amsta01maillage
 
      j = 1
 
-     ! Recuperation des identifiants des somments 
+     ! Recuperation des identifiants des somments
      boucle_triVertices_proc_myRank : do i=1,nbTri_tot
         if (mail%triPartRef(i,1) == myRank) then
            mail%triVertices(j,1:3) = mail%elemsVertices(mail%tri2elem(i),1:3)
@@ -270,7 +270,7 @@ module amsta01maillage
      end do boucle_triVertices_proc_myRank
 
 
-     
+
      condition_rank_0 : if (myRank == 0) then
 
         ! Initialisation du nombre de triangles pour le processeur 0 a 0
@@ -282,7 +282,7 @@ module amsta01maillage
            mail%nbTri = mail%nbTri + &
                 min(count(mail%refPartNodes(mail%elemsVertices(mail%tri2elem(i),:))==0),1)
         end do
-        
+
         ! Allocation de la matrice triVertices pour le processeur 0
         allocate(mail%triVertices(mail%nbTri,3))
 
@@ -297,14 +297,14 @@ module amsta01maillage
                  k = k+1
                  ! Une fois que le triangel a ete attribue a cause de l'un de ces sommets on sort
                  ! Ceci pour ne pas compter deux fois un meme triangle
-                 exit 
+                 exit
               end if
            end do
         end do
-        
+
      end if condition_rank_0
 
-     
+
     end subroutine getTriangles
 
 

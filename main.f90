@@ -13,7 +13,7 @@ program main
   real(kind=8)                         :: erreur
   real(kind=8), dimension(:), pointer  :: residu
   logical                              :: conv
-  integer                              :: nbSsDomaine 
+  integer                              :: nbSsDomaine
 
   ! Variables MPI
   integer                              :: nbTask, myRank, ierr, req
@@ -25,10 +25,10 @@ program main
   call MPI_COMM_RANK(MPI_COMM_WORLD, myRank, ierr)
 
   ! Nombre de partitions dans le mailage
-  nbSsDomaine = 3
+  nbSsDomaine = 2
 
   if (myRank == 0) then 
-  
+
      write(*,*)
      write(*,*) '  **** TA01 Equation de la chaleur ****  '
 
@@ -39,8 +39,8 @@ program main
   end if
 
   ! lecture du maillage
-  mail = loadFromMshFile("./essaiGmsh.msh", myRank, nbSsDomaine)
-  
+  mail = loadFromMshFile("./testpart.msh", myRank, nbSsDomaine)
+
   ! construction des donnees sur les triangles
   call getTriangles(mail, myRank, nbSsDomaine)
 
@@ -48,23 +48,27 @@ program main
   if(myRank == 0) call affichePartNoeud(mail, "infoNoeuds.log")
   if(myRank == 0) call affichePartElem(mail, "infoElems.log")
   call affichePartTri(mail, "infoTris.log", myRank)
-  
-  
+
+
   ! creation des problemes
   call loadFromMesh(pb,mail)
-  
+
   ! assemblage des matrices elements finis
-  call assemblage(pb)
-  
+  call assemblage(pb, myRank)
+
   ! pseudo-elimination des conditions essentielles
-  call pelim(pb,mail%refNodes(1))
+  if (myRank /= 0) call pelim(pb, mail%refNodes(1))
+  if (myRank == 0) call pelim(pb, -3)
 
-  STOP "Arret du programme"
+  !call MPI_FINALIZE(ierr)
 
-  if (myRank == 0) then 
+  ! STOP "Arret du programme"
+
+
+  if (myRank == 0) then
      write(*,*) '-----------------------------------------'
      write(*,*) 'Erreur theorique attendu :'
-  end if 
+  end if
 
   ! calcul du residu theorique
   allocate(residu(mail%nbNodes))
@@ -77,10 +81,10 @@ program main
   write(*,*) 'Resolution du systeme lineaire : '
 
   ! Resolution par jacobi
-  ! call solveJacobi(pb, 0.000001, conv)
+  call solveJacobi(pb, 0.000001, conv, myRank)
 
   ! Resolution par Gauss Seidel
-  call solveGaussSeidel(pb, 0.000001, conv)
+  ! call solveGaussSeidel(pb, 0.000001, conv)
 
   ! Si on n'a pas converge on utilise une methode directe
   if (conv .eqv. .FALSE.) then
