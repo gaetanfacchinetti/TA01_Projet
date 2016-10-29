@@ -360,7 +360,7 @@ module amsta01maillage
 
 
     
-    ! Affiche les references des noeuds
+    ! Affiche les references des elements
     subroutine affichePartElem(mail, filename)
 
       implicit none
@@ -393,7 +393,7 @@ module amsta01maillage
     
 
     
-    ! Affiche les references des noeuds
+    ! Affiche les references des triangles
     subroutine affichePartTri(mail, filename, myRank)
 
       implicit none
