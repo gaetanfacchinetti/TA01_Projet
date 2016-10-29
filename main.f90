@@ -14,9 +14,10 @@ program main
   real(kind=8), dimension(:), pointer  :: residu
   logical                              :: conv
   integer                              :: nbSsDomaine
+  character(len=100)                    :: filename
 
   ! Variables MPI
-  integer                              :: nbTask, myRank, ierr, req
+  integer                              :: nbTask, myRank, ierr, req, errcode
   integer, dimension(MPI_STATUS_SIZE)  :: status
 
   call MPI_INIT(ierr)
@@ -24,18 +25,46 @@ program main
   call MPI_COMM_SIZE(MPI_COMM_WORLD, nbTask, ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, myRank, ierr)
 
-  ! Nombre de partitions dans le mailage
-  nbSsDomaine = 2
 
+  
   if (myRank == 0) then 
 
-     write(*,*)
-     write(*,*) '  **** TA01 Equation de la chaleur ****  '
+     write(*,*) 
+     write(*,*) '*************************************************************'
+     write(*,*) '            **** TA01 Equation de la chaleur ****  '
+     write(*,*) '*************************************************************'
 
+  end if
+
+  
+  open(unit=11, file="python_res.txt", form='formatted')
+
+  read(11,*) filename
+  read(11,*) nbSsDomaine
+
+  
+  if (myRank == 0) then
      write(*,*)
-     write(*,*) '-----------------------------------------'
+     write(*,*) '-----------------------------------------------------------'
+     write(*,*) 'Nombre de sous-domaines du maillage lu : ', nbSsDomaine
+  end if
+
+  ! erreur si le nombre de sous-domaines est différent de celui du nombre de processeurs
+  if(nbTask /= nbSsDomaine + 1) then
+     if(myRank == 0) then
+        write(*,*) '-----------------------------------------------------------'
+        write(*,*) "ERROR : Le nombre de sous-domaines est différent du nombre de processeurs demandés"
+        write(*,*) '-----------------------------------------------------------'
+     end if
+     call MPI_Abort(MPI_COMM_WORLD,errcode,ierr)
+  end if
+
+  
+  if (myRank == 0) then 
+     write(*,*)
+     write(*,*) '-----------------------------------------------------------'
      write(*,*) 'Proprietes du maillage :'
-     
+
   end if
 
   ! lecture du maillage
@@ -66,7 +95,7 @@ program main
 
 
   if (myRank == 0) then
-     write(*,*) '-----------------------------------------'
+     write(*,*) '-----------------------------------------------------------'
      write(*,*) 'Erreur theorique attendu :'
   end if
 
@@ -77,7 +106,7 @@ program main
   print *, "Erreur theorique=", erreur
 
 
-  write(*,*) '-----------------------------------------'
+  write(*,*) '-----------------------------------------------------------'
   write(*,*) 'Resolution du systeme lineaire : '
 
   ! Resolution par jacobi
@@ -95,7 +124,7 @@ program main
   end if
 
 
-  write(*,*) '-----------------------------------------'
+  write(*,*) '-----------------------------------------------------------'
   write(*,*) 'Calcul du residu reel et de l erreur :'
 
   ! calcul du residu
@@ -107,11 +136,16 @@ program main
   erreur=dsqrt(dot_product(pb%uexa-pb%u,pb%uexa-pb%u))
   print *, "||u-uexa||_2=", erreur
 
-  write(*,*) '-----------------------------------------'
-  write(*,*)
-  write(*,*) '      **** Fin du programmme ****'
-  write(*,*)
 
+  if (myRank == 0) then
+  
+     write(*,*) '-----------------------------------------------------------'
+     write(*,*)
+     write(*,*) '      **** Fin du programmme ****'
+     write(*,*)
+     
+  end if
+  
   ! sauvegarde de la solution et de la solution theorique
   call saveToVtu(pb%mesh,pb%u,pb%uexa)
 

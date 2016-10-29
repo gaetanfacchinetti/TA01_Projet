@@ -7,7 +7,7 @@ import numpy
 
 # Si jamais le nom est specifie en argument on le prend
 if len(sys.argv) > 1:
-    filename = sys.argv[2]
+    filename = sys.argv[1]
     
 else:
 
@@ -47,15 +47,15 @@ for i in range(size):
     A[i] = f[6]
 
 nbSsDomains = int(numpy.amax(A))
-print
-print "*************************************************************"
-print "**                 INFOS PYTHON                              "
-print "**  Le fichier lu est : ", filename
-print "**  Le nombre de sous-domaines est :", nbSsDomains
-print "**  Ce nombre est stocké dans le fichier : " "python_res.txt"
-print "*************************************************************"
-print
-print
+# print
+# print "*************************************************************"
+# print "**                 INFOS PYTHON                              "
+# print "**  Le fichier lu est : ", filename
+# print "**  Le nombre de sous-domaines est :", nbSsDomains
+# print "**  Ce nombre est stocké dans le fichier : " "python_res.txt"
+# print "*************************************************************"
+# print
+# print
 
 
 resultats = open("python_res.txt", "w")

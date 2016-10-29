@@ -16,6 +16,7 @@ module amsta01maillage
     real(kind=8), dimension(:,:), pointer :: coords
     integer, dimension(:,:), pointer :: typeElems, elemsVertices, triVertices, elemsPartRef, triPartRef
     integer, dimension(:), pointer :: refNodes, refElems, refTri, elemsNbPart, triNbPart, refPartNodes, tri2elem
+    integer, dimension(:), pointer :: int2glob, intFront2glob
   end type
 
 
@@ -143,7 +144,8 @@ module amsta01maillage
 
 
             ! affectation des noeuds à un domaine et teste de leur appartenance à plusieurs domaines
-            ! 1 -> noeud du bord; 2 -> noeud de l'intérieur; -7 -> noeud d'une interface; -3 -> noeud interface inter bord
+            ! 1 -> noeud du bord; 2 -> noeud de l'intérieur;
+            ! -7 -> noeud d'une interface; -3 -> noeud interface inter bord
 
             ! Attention on n'initialise pas res%RefPartNodes a 0 ici sinon il
             ! est remis a 0 a chaque tour et ca ne fonctionne pas
@@ -308,10 +310,80 @@ module amsta01maillage
     end subroutine getTriangles
 
 
+    
+
+
+    
+    ! Preparation des tableaux necessaires pour les communications
+    subroutine prepareComm(mail, myRank)
+
+      implicit none
+
+      type(maillage), intent(inout) :: mail
+      integer, intent(in)           :: myRank
+
+      ! Variables internes
+      integer                         :: nbNodes_Interface, nbNodes_InterfaceFront
+      integer                         :: j, k, i
+      integer, dimension(:), pointer  :: intFront2glob_prov
+
+      ! Recuperation du nombre de noeuds a l'interface 
+      nbNodes_Interface = count(mail%RefPartNodes(:) == 0)
+
+      ! Allocation du tableau int2glob
+      allocate(mail%int2glob(nbNodes_Interface))
+      allocate(intFront2glob_prov(mail%nbNodes))
+
+
+      k = 1
+
+      ! Creation du tableau int2glob
+      boucle_creation_int2glob : do j=1,mail%nbNodes
+         if (mail%refPartNodes(j) == 0) then
+            mail%int2glob(k) = j
+            k=k+1
+         end if
+      end do boucle_creation_int2glob
 
 
 
+      intFront2glob_prov = 0 
+      
+      k = 1
 
+      ! Creation du tableau intFront2glob
+      ! Tableau relatif a chaque processeur
+      boucle_creation_intFront2glob : do j=1, mail%nbNodes
+         boucle_check_triangle : do i = 1,mail%nbTri
+            ! Si jamais le triangle en question a un sommet egal au sommet j
+            ! ET si jamais le triangle en question a un sommet sur l'interface
+            ! ET si jamais le sommet j n'est pas deja sur l'interface lui meme
+            if (count(mail%triVertices(i,:) == j) == 1 .AND. &
+                 count(mail%refPartNodes(mail%triVertices(i,:)) == 0) > 1 .AND. &
+                 mail%refPartNodes(j) /= 0) then
+               intFront2glob_prov(k) = j
+               k = k+1
+               ! Des que l'on a trouve un triangle pour lequel ca fonctionne on sort
+               exit boucle_check_triangle
+            end if
+         end do boucle_check_triangle
+      end do boucle_creation_intFront2glob
+
+
+      !! Note --
+      ! On utilie ici un tableau provisoire de la taille du nombre de noeud que l'on
+      ! dealloue ensuite pour eviter de devoir parcourir deux fois la boucle
+      ! precedente etant donne que l'on ne connait pas a priori la taille que doit
+      ! prendre le tableau intFront2glob
+      
+      allocate(mail%intFront2glob(count(intFront2glob_prov(:) /= 0)))
+      mail%intFront2glob = pack(intFront2glob_prov, intFront2glob_prov /= 0)
+
+      ! Deallocation du tableau provisoire 
+      deallocate(intFront2glob_prov)
+      
+
+    end subroutine prepareComm
 
 
 

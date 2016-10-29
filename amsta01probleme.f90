@@ -131,8 +131,6 @@ module amsta01probleme
       integer :: n, nn, i, ii, j
       real(kind=8) :: val
 
-      write(*,*) 'Taille de p_K : ', pb%p_K%n, pb%p_K%m
-      write(*,*) 'Taille de g   : ', size(pb%g)
 
       pb%felim=pb%f-spmatvec(pb%p_K,pb%g)
       pb%p_Kelim=pb%p_K
