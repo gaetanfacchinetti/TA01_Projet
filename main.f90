@@ -53,7 +53,8 @@ program main
   if(nbTask /= nbSsDomaine + 1) then
      if(myRank == 0) then
         write(*,*) '-----------------------------------------------------------'
-        write(*,*) "ERROR : Le nombre de sous-domaines est différent du nombre de processeurs demandés"
+        write(*,*) 'ERROR : Le nombre de sous-domaines est', & 
+             'différent du nombre de processeurs demandés'
         write(*,*) '-----------------------------------------------------------'
      end if
      call MPI_Abort(MPI_COMM_WORLD,errcode,ierr)
@@ -77,6 +78,8 @@ program main
   if(myRank == 0) call affichePartNoeud(mail, "infoNoeuds.log")
   if(myRank == 0) call affichePartElem(mail, "infoElems.log")
   call affichePartTri(mail, "infoTris.log", myRank)
+
+  call prepareComm(mail, myRank)
 
 
   ! creation des problemes

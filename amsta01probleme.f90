@@ -265,8 +265,7 @@ module amsta01probleme
          if(coeff(pb%p_Kelim, i,i) /= 0) call setcoeff(M_inv,i,i,(1.0d0)/(coeff(pb%p_Kelim, i,i)))
       end do
 
-
-      ! if(myRank == 0) call affiche(pb%p_Kelim)
+      
 
       ! Initialisation du vecteur solution
       uk = 1.d0
@@ -278,6 +277,26 @@ module amsta01probleme
          ! Iteration de uk
          uk = spmatvec(M_inv,spmatvec(N,uk)) + spmatvec(M_inv,pb%felim)
 
+
+
+         !! ----
+         ! A decommenter, il faut definir et allouer uk_prime aussi
+         ! Apres j'ai juste commencer 
+         
+         ! uk_prime(:) = uk(pb%mesh%int2glob(:))
+         ! call MPI_BCAST(uk_prime,n_size,0, MPI_COMM_WORLD, ierr)
+
+         if (myRank == 0) then
+            !do i=1,nbSsDomaine
+            !   call MPI_RECV()
+            !end do
+         else
+            ! uk(pb%mesh%int2glob(:))=uk_prime(:)
+            ! call MPI_SEND()
+         end if
+
+         
+         
          ! Calcul de la norme de du residu pour observer la convergence
          ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ?
          ! if (mod(k,10) == 0) then
