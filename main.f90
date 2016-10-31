@@ -94,68 +94,69 @@ program main
   ! pseudo-elimination des conditions essentielles
   if (myRank /= 0) call pelim(pb, mail%refNodes(1))
   if (myRank == 0) call pelim(pb, -3)
+  if (myRank == 0) call pelim(pb, mail%refNodes(1))
 
+  !! Note --
+  ! ATTENTION : il ne faut pas oublier de faire la pseudo elimination
+  ! au rang 0 pour les elements qui sont sur le bords mais pas sur
+  ! l'interface, car il y en a
+  !! --
 
-  call SLEEP(2)
-  call MPI_ABORT(MPI_COMM_WORLD,errcode,ierr)
-
-
+  
 
   if (myRank == 0) then
+     
      write(*,*) '-----------------------------------------------------------'
      write(*,*) 'Erreur theorique attendu :'
+
+     ! calcul du residu theorique
+     allocate(residu(mail%nbNodes))
+     residu=pb%felim-pb%p_Kelim*pb%uexa
+     erreur=dsqrt(dot_product(residu,residu))
+     print *, "Erreur theorique=", erreur
+
+
+     write(*,*) '-----------------------------------------------------------'
+     write(*,*) 'Resolution du systeme lineaire : '
+
   end if
 
-  ! calcul du residu theorique
-  allocate(residu(mail%nbNodes))
-  residu=pb%felim-pb%p_Kelim*pb%uexa
-  erreur=dsqrt(dot_product(residu,residu))
-  print *, "Erreur theorique=", erreur
-
-
-  write(*,*) '-----------------------------------------------------------'
-  write(*,*) 'Resolution du systeme lineaire : '
-
+  
   ! Resolution par jacobi
-  call solveJacobi(pb, 0.0001, conv, myRank, ierr)
+  call solveJacobi(pb, 0.0000001, conv, myRank, nbSsDomaine, ierr)
 
   ! Resolution par Gauss Seidel
   ! call solveGaussSeidel(pb, 0.000001, conv)
 
-  ! Si on n'a pas converge on utilise une methode directe
-  if (conv .eqv. .FALSE.) then
-     ! resolution du systeme lineaire
-     call solveLU(pb)
-     write(*,*) 'WARNING : Il n y a pas eu convergence de la methode iterative'
-     write(*,*) 'INFO    : Le systeme a ete resolu a l aide d une methode directe LU'
-  end if
-
-
-  write(*,*) '-----------------------------------------------------------'
-  write(*,*) 'Calcul du residu reel et de l erreur :'
-
-  ! calcul du residu
-  residu=pb%felim-pb%p_Kelim*pb%u
-  erreur=dsqrt(dot_product(residu,residu))
-  print *, "Residu=", erreur
-
-  ! calcul de l'erreur L2
-  erreur=dsqrt(dot_product(pb%uexa-pb%u,pb%uexa-pb%u))
-  print *, "||u-uexa||_2=", erreur
-
-
-  if (myRank == 0) then
   
+  if(myRank == 0) then
+     
+     write(*,*) '-----------------------------------------------------------'
+     write(*,*) 'Calcul du residu reel et de l erreur :'
+
+     ! calcul du residu
+     residu=pb%felim-pb%p_Kelim*pb%u
+     erreur=dsqrt(dot_product(residu,residu))
+     print *, "Residu=", erreur
+
+     ! calcul de l'erreur L2
+     erreur=dsqrt(dot_product(pb%uexa-pb%u,pb%uexa-pb%u))
+     print *, "||u-uexa||_2=", erreur
+
+
      write(*,*) '-----------------------------------------------------------'
      write(*,*)
      write(*,*) '      **** Fin du programmme ****'
      write(*,*)
-     
-  end if
-  
-  ! sauvegarde de la solution et de la solution theorique
-  call saveToVtu(pb%mesh,pb%u,pb%uexa)
 
+  end if
+
+
+  ! sauvegarde de la solution et de la solution theorique
+  if (myRank == 0) call saveToVtu(pb%mesh,pb%u,pb%uexa)
+  if (myRank == 0) write(*,*) pb%u - pb%uexa
+
+  
   call MPI_FINALIZE(ierr)
 
 end program

@@ -232,7 +232,7 @@ module amsta01probleme
     
 
     ! calcul de la solution du problème par Jacobi
-    subroutine solveJacobi(pb, eps, conv, myRank, ierr)
+    subroutine solveJacobi(pb, eps, conv, myRank, nbSsDomaine, ierr)
       
       implicit none
 
@@ -241,13 +241,17 @@ module amsta01probleme
       real, intent(in)              :: eps           ! Critere de convergence pour la methode
       logical, intent(out)          :: conv          ! Logique permettant de savoir si on a converge
       integer, intent(in)           :: myRank, ierr  ! Variables MPI
+      integer, intent(in)           :: nbSsDomaine 
+
+      ! Variable locale MPI
+      integer, dimension(MPI_STATUS_SIZE)         :: status
 
       ! Variables locales
       type(matsparse)                       :: N, M_inv    ! Matrice N et inverse de M avec K=M-N
       real(kind=8), dimension(:), pointer   :: rk, uk      ! Itere de la solution et residu
-      real(kind=8), dimension(:), pointer   :: uk_prime    ! contient les noeuds à envoyer pour les communications
-      real(kind=8)                          :: norm        ! Norme du residu
-      integer                               :: n_size,i,k  ! Taille probleme et variables boucles
+      real(kind=8), dimension(:), pointer   :: uk_prime, uk_sec, uk_tri   ! contient les valeurs à envoyer pour les communications
+      real(kind=8)                          :: norm, sum       ! Norme du residu
+      integer                               :: n_size,i,k,j,errcode  ! Taille probleme et variables boucles
 
 
       ! conv est mis a false par default
@@ -275,60 +279,111 @@ module amsta01probleme
       uk = 1.d0
 
 
+      
       ! on alloue le vecteur uk_prime qui contient les noeuds à envoyer
       allocate(uk_prime(size(pb%mesh%int2glob)))
-    
+      ! on alloue le vecteur uk_prime qui contient les noeuds à envoyer
+      if(myRank /= 0) allocate(uk_sec(size(pb%mesh%intFront2glob)))
+      if(myRank == 0) allocate(uk_sec(size(pb%mesh%intFront2glob_proc0(1,:))))
+      allocate(uk_tri(size(uk)))
+      
 
       ! On preferera faire une boucle do pour ne pas avoir de fuite. On sort avec un exit.
       do  k = 1,1000
 
          ! Iteration de uk
          uk = spmatvec(M_inv,spmatvec(N,uk)) + spmatvec(M_inv,pb%felim)
-
-    
+         
          ! on remplit le vecteur uk_prime des noeuds à envoyer grâce à int2glob sur le proc 0 (interface)
          if (myRank == 0) uk_prime(:) = uk(pb%mesh%int2glob(:))
          ! on envoit uk_prime de 0 vers les autres proc
-         call MPI_BCAST(uk_prime, size(uk_prime), MPI_DOUBLE, 0, MPI_COMM_WORLD, ierr)
+         call MPI_Bcast(uk_prime, size(uk_prime), MPI_DOUBLE, 0, MPI_COMM_WORLD, ierr)
          ! on réaffecte chaque noeud de l'interface pour uk sur chaque processeur
          uk(pb%mesh%int2glob(:)) = uk_prime(:)
-
-
+       
          
          if (myRank == 0) then
-            !do i=1,nbSsDomaine
-            !   call MPI_RECV()
-            !end do
-         else
-            ! uk(pb%mesh%int2glob(:))=uk_prime(:)
-            ! call MPI_SEND()
-         end if
+            do i=1,nbSsDomaine
 
+               uk_sec = 0
+
+               call MPI_RECV(uk_sec, size(uk_sec), &
+                    MPI_DOUBLE, i, 100, MPI_COMM_WORLD, status, ierr)
+
+               do j = 1,size(pb%mesh%intFront2glob_proc0(i,:))
+                  if(pb%mesh%intFront2glob_proc0(i,j) /= 0) uk(pb%mesh%intFront2glob_proc0(i,j)) = uk_sec(j)
+               end do
+
+            end do
+
+         else
+            uk_sec(:) = uk(pb%mesh%intFront2glob(:))
+            call MPI_SEND(uk_sec, size(pb%mesh%intFront2glob(:)), &
+                 MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, ierr)
+         end if
+         
+    
+         
+         
          
          
          ! Calcul de la norme de du residu pour observer la convergence
          ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ?
          ! if (mod(k,10) == 0) then
+         
+         ! Calcul de residu et de la norme
+         rk = spmatvec(pb%p_Kelim, uk) - pb%felim
 
-            ! Calcul de residu et de la norme
-            rk = spmatvec(pb%p_Kelim, uk) - pb%felim
-            norm = dsqrt(dot_product(rk, rk))
+         ! Si le sommet n'appartient pas au sous domaine alors on met rk a 0
+         ! On pourrait avoir des problemes pour des sommets aux frontieres
+         do j=1,n_size
+            if(pb%mesh%refPartNodes(j) /= myRank) rk(j) = 0
+         end do
 
+         ! Produit scalaire pour un domaine donne
+         sum = dot_product(rk,rk)
 
-            ! Si jamais on a atteint le critère de convergence on sort de la boucle
-            if (norm < eps) then
-               conv = .TRUE.
-               write(*,*)
-               write(*,*) 'INFO    : Precision attendue pour la convergence : ', eps
-               write(*,*) 'INFO    : Convergence apres ', k, ' iterations de la methode de Jacobi'
-               exit
-            end if
+         
+         ! On fait la somme et on redistribue a tout le monde
+         call MPI_ALLREDUCE(sum, norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, ierr)
 
-          !end if
+         ! Calcul de la norme 
+         norm = dsqrt(norm)
+
+         ! Si jamais on a atteint le critère de convergence on sort de la boucle
+         if (norm < eps) then
+            conv = .TRUE.
+            if(myRank == 0) write(*,*)
+            if(myRank == 0) write(*,*) 'INFO    : Precision attendue pour la convergence : ', eps
+            if(myRank == 0) write(*,*) 'INFO    : Convergence apres ', k, ' iterations de la methode de Jacobi'
+            exit
+         end if
+         
       end do
 
-      ! On donne a la solution la valeur du dernier itere
-      pb%u = uk
+
+      ! On recompose la solution avec les donnees de chaque processeur
+      ! Si le sommet n'appartient pas au sous domaine alors on met uk a 0
+      ! On pourrait avoir des problemes pour des sommets aux frontieres
+      do j=1,n_size
+         if(pb%mesh%refPartNodes(j) /= myRank) uk(j) = 0
+      end do
+
+
+
+      if(myRank == 0) write(*,*) 'uk(11)_0 : ', uk(11)
+      if(myRank == 1) write(*,*) 'uk(11)_1 : ', uk(11)
+      if(myRank == 2) write(*,*) 'uk(11)_2 : ', uk(11)
+      if(myRank == 0) write(*,*) 'uk(11)_exa : ', pb%uexa(11)
+      
+
+      call SLEEP(1)
+      
+      ! On recupere tout sur le processeur 0
+      call MPI_REDUCE(uk, pb%u, n_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+
+      
+      !if(myRank == 0) write(*,*) 'La solution : ', pb%u
 
       ! On desallocate les matrice creees
       deallocate(uk,rk)
@@ -428,58 +483,64 @@ module amsta01probleme
       type(maillage), intent(in) :: mesh
       real(kind=8), dimension(mesh%nbNodes), intent(in) :: sol, solexa
       character(len=*), intent(in), optional :: fname
+
       character(len=300) :: filename, n1, n2, tmp
       integer :: i
-
+      
+      
       filename="sol.vtu"
       if (present(fname)) then
-        filename=fname
+         filename=fname
       end if
 
       open(unit=19, file=filename, form='formatted', status='unknown')
       write(19,*) '<VTKFile type="UnstructuredGrid" version="0.1"  byte_order="LittleEndian">'
       write(19,*) '<UnstructuredGrid>'
       n1=computeAttributeFormat("NumberOfPoints",mesh%nbNodes)
-      n2=computeAttributeFormat("NumberOfCells", mesh%nbTri)
+      n2=computeAttributeFormat("NumberOfCells", mesh%nbTriTot)
       write(19,*) '<Piece '//trim(adjustl(n1))//' '//trim(adjustl(n2))//'>'
       write(19,*) '<PointData>'
       write(19,*) '<DataArray type="Float64" Name="u" format="ascii">'
       do i=1, mesh%nbNodes
-        write(19,*) sol(i)
+         write(19,*) sol(i)
       end do
       write(19,*) '</DataArray>'
       write(19,*) '<DataArray type="Float64" Name="uexa" format="ascii">'
       do i=1, mesh%nbNodes
-        write(19,*) solexa(i)
+         write(19,*) solexa(i)
       end do
       write(19,*) '</DataArray>'
       write(19,*) '<DataArray type="Float64" Name="erreur" format="ascii">'
       do i=1, mesh%nbNodes
-        write(19,*) sol(i)-solexa(i)
+         write(19,*) sol(i)-solexa(i)
       end do
       write(19,*) '</DataArray>'
       write(19,*) '</PointData>'
       write(19,*) '<Points>'
       write(19,*) '<DataArray type="Float64" Name="Nodes" NumberOfComponents="3" format="ascii">'
       do i=1, mesh%nbNodes
-        write(19,*) mesh%coords(i,:)
+         write(19,*) mesh%coords(i,:)
       end do
       write(19,*) '</DataArray>'
       write(19,*) '</Points>'
       write(19,*) '<Cells>'
       write(19,*) '<DataArray type="Int32" Name="connectivity" format="ascii">'
-      do i=1, mesh%nbTri
-        write(19,*) mesh%triVertices(i,:)-1
+
+
+      do i=1, mesh%nbTriTot
+         write(19,*) mesh%triVerticesTot(i,:)-1
       end do
+
+
       write(19,*) '</DataArray>'
       write(19,*) '<DataArray type="Int32" Name="offsets" format="ascii">'
-      do i=1, mesh%nbTri
-        write(19,*) 3*i
+      do i=1, mesh%nbTriTot
+         write(19,*) 3*i
       end do
       write(19,*) '</DataArray>'
       write(19,*) '<DataArray type="UInt8" Name="types" format="ascii">'
-      do i=1, mesh%nbTri
-        write(19,*) 5
+      do i=1, mesh%nbTriTot
+         write(19,*) 5
       end do
       write(19,*) '</DataArray>'
       write(19,*) '</Cells>'
@@ -487,7 +548,13 @@ module amsta01probleme
       write(19,*) '</UnstructuredGrid>'
       write(19,*) '</VTKFile>'
       close(19)
-    end subroutine saveToVtu
+
+
+ end subroutine saveToVtu
+
+
+
+    
     ! fonction qui permet de construire une chaîne de type attribut
     ! utilisée dans saveToVtu
     function computeAttributeFormat(s,i) result(n)

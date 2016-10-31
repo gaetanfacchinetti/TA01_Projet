@@ -11,9 +11,9 @@ module amsta01maillage
   include 'mpif.h'
   
   type maillage
-    integer :: nbNodes, nbElems, nbTri
+    integer :: nbNodes, nbElems, nbTri, nbTriTot
     real(kind=8), dimension(:,:), pointer :: coords
-    integer, dimension(:,:), pointer :: typeElems, elemsVertices, triVertices, elemsPartRef, triPartRef
+    integer, dimension(:,:), pointer :: typeElems, elemsVertices, triVertices, elemsPartRef, triPartRef, triVerticesTot
     integer, dimension(:,:), pointer :: intFront2glob_proc0
     integer, dimension(:), pointer :: refNodes, refElems, refTri, elemsNbPart, triNbPart, refPartNodes, tri2elem
     integer, dimension(:), pointer :: int2glob, intFront2glob
@@ -219,8 +219,9 @@ module amsta01maillage
       end if
 
 
-      nbTri_tot   = count(mail%typeElems(:,1) == 2)
-      mail%nbTri  = nbTri_tot
+      nbTri_tot     = count(mail%typeElems(:,1) == 2)
+      mail%nbTri    = nbTri_tot
+      mail%nbTriTot = nbTri_tot
       if(myRank == 0) Print*, "NbTri (total) =", mail%nbTri
 
       allocate(mail%refTri(mail%nbTri), mail%triPartRef(mail%nbTri,nbSsDomaine))
@@ -271,6 +272,7 @@ module amsta01maillage
         end if
      end do boucle_triVertices_proc_myRank
 
+     
 
 
      condition_rank_0 : if (myRank == 0) then
@@ -303,11 +305,33 @@ module amsta01maillage
               end if
            end do
         end do
-
+        
      end if condition_rank_0
 
 
-    end subroutine getTriangles
+     
+
+     ! On construit tous les triangles sur le processeur 0
+     ! Ceci pour la representation a la fin
+     condition_constr_pr_repr : if (myRank == 0) then
+
+        allocate(mail%triVerticesTot(mail%nbTriTot,3))
+
+        j = 1
+
+        do i=1,mail%nbElems
+           if (mail%typeElems(i,1) == 2) then
+
+              mail%triVerticesTot(j,1:3) = mail%elemsVertices(i,1:3)
+              j=j+1
+              
+           end if
+        end do
+
+     end if condition_constr_pr_repr
+
+
+   end subroutine getTriangles
 
 
     
