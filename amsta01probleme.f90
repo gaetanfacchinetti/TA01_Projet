@@ -54,20 +54,26 @@ module amsta01probleme
 
 
       do i=1,n
+         
         ! initialisation de la solution theorique, du second membre et de la condition aux limites
         x=pb%mesh%coords(i,1)
         y=pb%mesh%coords(i,2)
 
-        ! pb%uexa(i)=pb%mesh%coords(i,1) ! Test 1
-        pb%uexa(i) = exp((x+y)/8)
-
+        ! pb%uexa(i) = pb%mesh%coords(i,1) ! Test 1
+        ! pb%uexa(i) = exp((x+y)/8)
+        pb%uexa(i) = x*(6-x)*y*(2-y)
+        
         ! -f est la fonction égale au laplacien
-        pb%f(i) = exp((x+y)/8)/16
+        ! pb%f(i) = exp((x+y)/8)/16
+        ! pb%f(i) = 0
+        pb%f(i) = 2*(x*(6-x)+y*(2-y))
+        
 
         ! g est la restruction de uexa sur le bord
-        if (pb%mesh%refNodes(i) == pb%mesh%refNodes(1) ) then
+        if (pb%mesh%refNodes(i) == 1 .OR. pb%mesh%refNodes(i) == -3 ) then
           pb%g(i)=pb%uexa(i)
-        end if
+       end if
+       
       end do
 
 
@@ -125,21 +131,37 @@ module amsta01probleme
     ! pseudo-élimination des conditions essentielles
     !     pb : problème sur lequel appliquer la pseudo-élimination
     !     id : numéro du domaine de bord
-    subroutine pelim(pb,id)
+    subroutine pelim(pb,id,id2)
+
+      implicit none
+      
       type(probleme), intent(inout) :: pb
       integer, intent(in) :: id
+      integer, intent(in), optional :: id2
+      
       integer, dimension(:), pointer :: indelim
-      integer :: n, nn, i, ii, j
+      integer :: n, nn, i, ii, j, id3
       real(kind=8) :: val
-
-
+      
       pb%felim=pb%f-spmatvec(pb%p_K,pb%g)
       pb%p_Kelim=pb%p_K
 
       n=pb%mesh%nbNodes
-      nn=count(pb%mesh%refNodes == id)
+
+      if(present(id2)) then 
+         nn=count(pb%mesh%refNodes == id) + count(pb%mesh%refNodes == id2)
+      else
+         nn=count(pb%mesh%refNodes == id)
+      end if
+      
       allocate(indelim(nn))
-      indelim=pack((/ (i, i=1,n) /),pb%mesh%refNodes == id)
+
+      if(present(id2)) then
+         indelim=pack((/ (i, i=1,n) /), pb%mesh%refNodes == id .OR. pb%mesh%refNodes == id2)
+      else
+         indelim=pack((/ (i, i=1,n) /), pb%mesh%refNodes == id)
+      end if
+         
 
       do ii=1,nn
          i=indelim(ii)
@@ -249,7 +271,7 @@ module amsta01probleme
       ! Variables locales
       type(matsparse)                       :: N, M_inv    ! Matrice N et inverse de M avec K=M-N
       real(kind=8), dimension(:), pointer   :: rk, uk      ! Itere de la solution et residu
-      real(kind=8), dimension(:), pointer   :: uk_prime, uk_sec, uk_tri   ! contient les valeurs à envoyer pour les communications
+      real(kind=8), dimension(:), pointer   :: uk_prime, uk_sec, uk_tri  
       real(kind=8)                          :: norm, sum       ! Norme du residu
       integer                               :: n_size,i,k,j,errcode  ! Taille probleme et variables boucles
 
@@ -289,10 +311,12 @@ module amsta01probleme
       
 
       ! On preferera faire une boucle do pour ne pas avoir de fuite. On sort avec un exit.
-      do  k = 1,1000
+      do  k = 1,5000
 
          ! Iteration de uk
          uk = spmatvec(M_inv,spmatvec(N,uk)) + spmatvec(M_inv,pb%felim)
+
+         uk_tri = uk
          
          ! on remplit le vecteur uk_prime des noeuds à envoyer grâce à int2glob sur le proc 0 (interface)
          if (myRank == 0) uk_prime(:) = uk(pb%mesh%int2glob(:))
@@ -322,42 +346,52 @@ module amsta01probleme
                  MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, ierr)
          end if
          
-    
-         
+
+
+         if (myRank == 0 .AND. k == 5) then
+            do j=1,n_size
+               if (uk(j) /= uk_tri(j)) write(*,*) 'Changement pour : ', j
+            end do
+         end if
+
+
          
          
          
          ! Calcul de la norme de du residu pour observer la convergence
          ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ?
-         ! if (mod(k,10) == 0) then
-         
-         ! Calcul de residu et de la norme
-         rk = spmatvec(pb%p_Kelim, uk) - pb%felim
 
-         ! Si le sommet n'appartient pas au sous domaine alors on met rk a 0
-         ! On pourrait avoir des problemes pour des sommets aux frontieres
-         do j=1,n_size
-            if(pb%mesh%refPartNodes(j) /= myRank) rk(j) = 0
-         end do
+         if (mod(k,20) == 0) then
+            
+            ! Calcul de residu et de la norme
+            rk = spmatvec(pb%p_Kelim, uk) - pb%felim
 
-         ! Produit scalaire pour un domaine donne
-         sum = dot_product(rk,rk)
+            ! Si le sommet n'appartient pas au sous domaine alors on met rk a 0
+            ! On pourrait avoir des problemes pour des sommets aux frontieres
+            do j=1,n_size
+               if(pb%mesh%refPartNodes(j) /= myRank) rk(j) = 0
+            end do
 
-         
-         ! On fait la somme et on redistribue a tout le monde
-         call MPI_ALLREDUCE(sum, norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, ierr)
+            ! Produit scalaire pour un domaine donne
+            sum = dot_product(rk,rk)
 
-         ! Calcul de la norme 
-         norm = dsqrt(norm)
 
-         ! Si jamais on a atteint le critère de convergence on sort de la boucle
-         if (norm < eps) then
-            conv = .TRUE.
-            if(myRank == 0) write(*,*)
-            if(myRank == 0) write(*,*) 'INFO    : Precision attendue pour la convergence : ', eps
-            if(myRank == 0) write(*,*) 'INFO    : Convergence apres ', k, ' iterations de la methode de Jacobi'
-            exit
-         end if
+            ! On fait la somme et on redistribue a tout le monde
+            call MPI_ALLREDUCE(sum, norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, ierr)
+
+            ! Calcul de la norme 
+            norm = dsqrt(norm)
+
+            ! Si jamais on a atteint le critère de convergence on sort de la boucle
+            if (norm < eps) then
+               conv = .TRUE.
+               if(myRank == 0) write(*,*)
+               if(myRank == 0) write(*,*) 'INFO    : Precision attendue pour la convergence : ', eps
+               if(myRank == 0) write(*,*) 'INFO    : Convergence apres ', k, ' iterations de la methode de Jacobi'
+               exit
+            end if
+
+      end if
          
       end do
 
@@ -368,22 +402,9 @@ module amsta01probleme
       do j=1,n_size
          if(pb%mesh%refPartNodes(j) /= myRank) uk(j) = 0
       end do
-
-
-
-      if(myRank == 0) write(*,*) 'uk(11)_0 : ', uk(11)
-      if(myRank == 1) write(*,*) 'uk(11)_1 : ', uk(11)
-      if(myRank == 2) write(*,*) 'uk(11)_2 : ', uk(11)
-      if(myRank == 0) write(*,*) 'uk(11)_exa : ', pb%uexa(11)
-      
-
-      call SLEEP(1)
       
       ! On recupere tout sur le processeur 0
       call MPI_REDUCE(uk, pb%u, n_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
-
-      
-      !if(myRank == 0) write(*,*) 'La solution : ', pb%u
 
       ! On desallocate les matrice creees
       deallocate(uk,rk)

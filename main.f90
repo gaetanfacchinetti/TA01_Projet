@@ -14,7 +14,7 @@ program main
   real(kind=8), dimension(:), pointer  :: residu
   logical                              :: conv
   integer                              :: nbSsDomaine
-  character(len=100)                    :: filename
+  character(len=100)                   :: filename
 
   ! Variables MPI
   integer                              :: nbTask, myRank, ierr, req, errcode
@@ -93,8 +93,8 @@ program main
 
   ! pseudo-elimination des conditions essentielles
   if (myRank /= 0) call pelim(pb, mail%refNodes(1))
-  if (myRank == 0) call pelim(pb, -3)
-  if (myRank == 0) call pelim(pb, mail%refNodes(1))
+  if (myRank == 0) call pelim(pb, mail%refNodes(1), -3)
+
 
   !! Note --
   ! ATTENTION : il ne faut pas oublier de faire la pseudo elimination
@@ -123,7 +123,7 @@ program main
 
   
   ! Resolution par jacobi
-  call solveJacobi(pb, 0.0000001, conv, myRank, nbSsDomaine, ierr)
+  call solveJacobi(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
 
   ! Resolution par Gauss Seidel
   ! call solveGaussSeidel(pb, 0.000001, conv)
