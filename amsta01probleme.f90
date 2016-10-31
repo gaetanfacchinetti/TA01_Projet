@@ -5,9 +5,10 @@
 module amsta01probleme
 
   use amsta01maillage
-  use amsta01sparse
+  use amsta01sparse  
 
   implicit none
+
 
   type probleme
     type(maillage), pointer :: mesh
@@ -228,20 +229,23 @@ module amsta01probleme
 
 
 
-    ! calcul de la solution du problème par Jacobi
-    subroutine solveJacobi(pb, eps, conv, myRank)
+    
 
+    ! calcul de la solution du problème par Jacobi
+    subroutine solveJacobi(pb, eps, conv, myRank, ierr)
+      
       implicit none
 
       ! Variables d'entree et de sortie
-      type(probleme), intent(inout) :: pb         ! Probleme que l'on cherche a resoudre
-      real, intent(in)              :: eps        ! Critere de convergence pour la methode
-      logical, intent(out)          :: conv       ! Logique permettant de savoir si on a converge
-      integer, intent(in)           :: myRank
+      type(probleme), intent(inout) :: pb            ! Probleme que l'on cherche a resoudre
+      real, intent(in)              :: eps           ! Critere de convergence pour la methode
+      logical, intent(out)          :: conv          ! Logique permettant de savoir si on a converge
+      integer, intent(in)           :: myRank, ierr  ! Variables MPI
 
       ! Variables locales
       type(matsparse)                       :: N, M_inv    ! Matrice N et inverse de M avec K=M-N
       real(kind=8), dimension(:), pointer   :: rk, uk      ! Itere de la solution et residu
+      real(kind=8), dimension(:), pointer   :: uk_prime    ! contient les noeuds à envoyer pour les communications
       real(kind=8)                          :: norm        ! Norme du residu
       integer                               :: n_size,i,k  ! Taille probleme et variables boucles
 
@@ -271,21 +275,26 @@ module amsta01probleme
       uk = 1.d0
 
 
+      ! on alloue le vecteur uk_prime qui contient les noeuds à envoyer
+      allocate(uk_prime(size(pb%mesh%int2glob)))
+    
+
       ! On preferera faire une boucle do pour ne pas avoir de fuite. On sort avec un exit.
       do  k = 1,1000
 
          ! Iteration de uk
          uk = spmatvec(M_inv,spmatvec(N,uk)) + spmatvec(M_inv,pb%felim)
 
+    
+         ! on remplit le vecteur uk_prime des noeuds à envoyer grâce à int2glob sur le proc 0 (interface)
+         if (myRank == 0) uk_prime(:) = uk(pb%mesh%int2glob(:))
+         ! on envoit uk_prime de 0 vers les autres proc
+         call MPI_BCAST(uk_prime, size(uk_prime), MPI_DOUBLE, 0, MPI_COMM_WORLD, ierr)
+         ! on réaffecte chaque noeud de l'interface pour uk sur chaque processeur
+         uk(pb%mesh%int2glob(:)) = uk_prime(:)
 
 
-         !! ----
-         ! A decommenter, il faut definir et allouer uk_prime aussi
-         ! Apres j'ai juste commencer 
          
-         ! uk_prime(:) = uk(pb%mesh%int2glob(:))
-         ! call MPI_BCAST(uk_prime,n_size,0, MPI_COMM_WORLD, ierr)
-
          if (myRank == 0) then
             !do i=1,nbSsDomaine
             !   call MPI_RECV()
@@ -326,6 +335,10 @@ module amsta01probleme
 
     end subroutine solveJacobi
 
+
+
+
+  
 
 
 

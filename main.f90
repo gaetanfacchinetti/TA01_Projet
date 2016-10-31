@@ -3,7 +3,7 @@ program main
   use amsta01maillage
   use amsta01sparse
   use amsta01probleme
-  use mpi
+  ! use mpi
 
   implicit none
 
@@ -49,7 +49,8 @@ program main
      write(*,*) 'Nombre de sous-domaines du maillage lu : ', nbSsDomaine
   end if
 
-  ! erreur si le nombre de sous-domaines est différent de celui du nombre de processeurs
+  ! erreur si le nombre de sous-domaines est différent
+  ! de celui du nombre de processeurs
   if(nbTask /= nbSsDomaine + 1) then
      if(myRank == 0) then
         write(*,*) '-----------------------------------------------------------'
@@ -57,7 +58,7 @@ program main
              'différent du nombre de processeurs demandés'
         write(*,*) '-----------------------------------------------------------'
      end if
-     call MPI_Abort(MPI_COMM_WORLD,errcode,ierr)
+     call MPI_ABORT(MPI_COMM_WORLD,errcode,ierr)
   end if
 
   
@@ -69,7 +70,7 @@ program main
   end if
 
   ! lecture du maillage
-  mail = loadFromMshFile("./testpart.msh", myRank, nbSsDomaine)
+  mail = loadFromMshFile(filename, myRank, nbSsDomaine)
 
   ! construction des donnees sur les triangles
   call getTriangles(mail, myRank, nbSsDomaine)
@@ -79,9 +80,11 @@ program main
   if(myRank == 0) call affichePartElem(mail, "infoElems.log")
   call affichePartTri(mail, "infoTris.log", myRank)
 
+  ! Prepare les tableaux pour les communications
   call prepareComm(mail, myRank)
-
-
+  ! Envoie des données importantes au proc 0
+  call commIntFront(mail, myRank, nbTask, ierr)
+  
   ! creation des problemes
   call loadFromMesh(pb,mail)
 
@@ -92,9 +95,10 @@ program main
   if (myRank /= 0) call pelim(pb, mail%refNodes(1))
   if (myRank == 0) call pelim(pb, -3)
 
-  !call MPI_FINALIZE(ierr)
 
-  ! STOP "Arret du programme"
+  call SLEEP(2)
+  call MPI_ABORT(MPI_COMM_WORLD,errcode,ierr)
+
 
 
   if (myRank == 0) then
@@ -113,7 +117,7 @@ program main
   write(*,*) 'Resolution du systeme lineaire : '
 
   ! Resolution par jacobi
-  call solveJacobi(pb, 0.000001, conv, myRank)
+  call solveJacobi(pb, 0.0001, conv, myRank, ierr)
 
   ! Resolution par Gauss Seidel
   ! call solveGaussSeidel(pb, 0.000001, conv)

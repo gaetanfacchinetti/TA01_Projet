@@ -6,15 +6,15 @@
 
 module amsta01maillage
 
-  ! A utiliser peut être pour definir refPartNodes
-  ! use amsta01sparse
-
   implicit none
 
+  include 'mpif.h'
+  
   type maillage
     integer :: nbNodes, nbElems, nbTri
     real(kind=8), dimension(:,:), pointer :: coords
     integer, dimension(:,:), pointer :: typeElems, elemsVertices, triVertices, elemsPartRef, triPartRef
+    integer, dimension(:,:), pointer :: intFront2glob_proc0
     integer, dimension(:), pointer :: refNodes, refElems, refTri, elemsNbPart, triNbPart, refPartNodes, tri2elem
     integer, dimension(:), pointer :: int2glob, intFront2glob
   end type
@@ -397,6 +397,77 @@ module amsta01maillage
 
 
 
+      
+    ! Envoie au processeur 0 les neouds voisins 
+    subroutine commIntFront(mail,myRank,nbTask,ierr)
+
+      implicit none
+
+      type(maillage), intent(inout) :: mail
+      integer, intent(in)           :: myRank
+      integer, intent(in)           :: nbTask
+      integer, intent(in)           :: ierr
+
+      integer, dimension(MPI_STATUS_SIZE)         :: status
+      integer, dimension(:), pointer              :: intFront2glob_prov
+      integer   :: j, size_tab, size_prov
+      
+
+      ! Ici on recupere les tailles de tableau pour savoir laquelle est le maxium
+      ! On commence par allouer le tableau intFront2glob pour le proc 0 a rien
+      if (myRank == 0)  allocate(mail%intFront2glob(0))
+
+      ! On recupere le max et on le redistribue en meme temps sur tous les processeurs
+      call MPI_ALLREDUCE(size(mail%intFront2glob(:)), size_tab, 1, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ierr)
+
+      ! On dealloue le tableau intFront2glob pour le proc 0
+      if (myRank == 0) deallocate(mail%intFront2glob)
+
+
+      ! Dans le cas du processeur 0 on recoit tous les tableaux intFront2glob
+      ! Dans le cas ds autres processeurs on envoie son tableau intFront2glob
+      condition_proc : if (myRank == 0) then
+
+         ! On alloue et initialise le nouveau tableau a la bonne taille
+         allocate(mail%intFront2glob_proc0(nbTask-1,size_tab))
+         mail%intFront2glob_proc0 = 0    
+
+         ! Recuperation des tableaux venant de tous les autres processeurs
+         do j=1,nbTask-1
+             call MPI_RECV(mail%intFront2glob_proc0(j,:), size_tab, MPI_INTEGER, j, 101, MPI_COMM_WORLD, status, ierr)
+          end do
+
+       else
+
+          ! On definit un tableau provisoire de taille size_tab avec des zeros a la fin si necessaire
+          allocate(intFront2glob_prov(size_tab))
+          intFront2glob_prov = 0
+          intFront2glob_prov(1:size(mail%intFront2glob(:))) = mail%intFront2glob(:)
+
+          ! Permet de verifier que la subroutine fait bien son travail
+          ! write(*,*)  myRank, ' : size_tab ', size_tab
+          ! write(*,*)  myRank, ' : size(intFront2glob) ', size(mail%intFront2glob(:))
+          ! write(*,*)  myRank, ' : prov ', intFront2glob_prov(:)
+
+          ! Envoi des donnees par chaque processeur
+          call MPI_SEND(intFront2glob_prov(:), size_tab, MPI_INTEGER, 0, 101, MPI_COMM_WORLD, ierr)
+
+          ! On dealloue le tableau provisoire
+          deallocate(intFront2glob_prov)
+          
+       end if condition_proc
+
+       
+       ! Permet de verifier que la subroutine fait bien son travail
+       ! do j=1,nbTask-1
+       !   if (myRank == 0) write (*,*) j, ' : ', mail%intFront2glob_proc0(j,:)
+       ! end do
+       ! write(*,*) myRank, ' : ', mail%intFront2glob_proc0(1,:)
+       ! write(*,*) myRank, ' : Attendu : ', mail%intFront2glob(:)
+       
+     end subroutine commIntFront
+
+
 
 
 
@@ -487,10 +558,10 @@ module amsta01maillage
       integer, dimension(2)          :: nb_tri
       integer    :: j, k
 
-      write(str_rank, '(I1.1)') myRank
+      write(str_rank, '(I2)') myRank
 
       k = index(filename, '.log')
-      filename_bis  = trim(filename(1:k-1)//'_proc_'//trim(str_rank)//'.log')
+      filename_bis  = trim(filename(1:k-1)//'_proc_'//trim(adjustl(str_rank))//'.log')
       filename_tris = trim(filename(1:k-1)//'_total_.log')
       
       
@@ -537,3 +608,9 @@ module amsta01maillage
 
     
 end module amsta01maillage
+
+
+
+!! Historique des modifications
+
+! 29/10/16 : Resolution d'un probleme dans l'ecriture des noms des fichiers infoTris.log
