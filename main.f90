@@ -15,10 +15,12 @@ program main
   logical                              :: conv
   integer                              :: nbSsDomaine
   character(len=100)                   :: filename
+  real                                 :: time_1, time_2
 
   ! Variables MPI
   integer                              :: nbTask, myRank, ierr, req, errcode
   integer, dimension(MPI_STATUS_SIZE)  :: status
+
 
   call MPI_INIT(ierr)
 
@@ -26,8 +28,7 @@ program main
   call MPI_COMM_RANK(MPI_COMM_WORLD, myRank, ierr)
 
 
-  
-  if (myRank == 0) then 
+  if(myRank == 0) then 
 
      write(*,*) 
      write(*,*) '*************************************************************'
@@ -84,7 +85,7 @@ program main
   call prepareComm(mail, myRank)
   ! Envoie des données importantes au proc 0
   call commIntFront(mail, myRank, nbTask, ierr)
-  
+
   ! creation des problemes
   call loadFromMesh(pb,mail)
 
@@ -96,16 +97,9 @@ program main
   if (myRank == 0) call pelim(pb, mail%refNodes(1),-3)
 
 
-  !! Note --
-  ! ATTENTION : il ne faut pas oublier de faire la pseudo elimination
-  ! au rang 0 pour les elements qui sont sur le bords mais pas sur
-  ! l'interface, car il y en a
-  !! --
-
-  
 
   if (myRank == 0) then
-     
+
      write(*,*) '-----------------------------------------------------------'
      write(*,*) 'Erreur theorique attendu :'
 
@@ -121,16 +115,16 @@ program main
 
   end if
 
-  
+
   ! Resolution par jacobi
   call solveJacobi(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
 
   ! Resolution par Gauss Seidel
   ! call solveGaussSeidel(pb, 0.000001, conv)
 
-  
+
   if(myRank == 0) then
-     
+
      write(*,*) '-----------------------------------------------------------'
      write(*,*) 'Calcul du residu reel et de l erreur :'
 
@@ -156,7 +150,8 @@ program main
   if (myRank == 0) call saveToVtu(pb%mesh,pb%u,pb%uexa)
   if (myRank == 0) write(*,*) pb%u - pb%uexa
 
-  
   call MPI_FINALIZE(ierr)
+
+
 
 end program

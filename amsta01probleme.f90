@@ -87,13 +87,13 @@ module amsta01probleme
 
       implicit none
 
-      type(probleme), intent(inout) :: pb
-      integer, intent(in) :: myRank
-      real(kind=8), dimension(2) :: s1,s2,s3
-      integer, dimension(3) :: s
-      real(kind=8), dimension(9) :: kel, mel
-      integer :: nt, i, j, k
-      real(kind=8) :: x
+      type(probleme), intent(inout)   :: pb
+      integer, intent(in)             :: myRank
+      real(kind=8), dimension(2)      :: s1,s2,s3
+      integer, dimension(3)           :: s
+      real(kind=8), dimension(9)      :: kel, mel
+      integer                         :: nt, i, j, k
+      real(kind=8)                    :: x
 
       nt=pb%mesh%nbTri
 
@@ -120,6 +120,30 @@ module amsta01probleme
       call sort(pb%p_K)
       call sort(pb%p_M)
 
+
+
+      ! Elimination des lignes incompletes
+      if (myRank /= 0) then
+
+         do j=1,size(pb%mesh%int2glob)
+            do i=1,pb%mesh%nbNodes
+               call delcoeff(pb%p_K, pb%mesh%int2glob(j), i)
+            end do
+         end do
+
+      else
+
+         do j=1,size(pb%mesh%intFront2glob_proc0(:,1))
+            do i=1,size(pb%mesh%intFront2glob_proc0(1,:))
+               do k=1,pb%mesh%nbNodes
+                  call delcoeff(pb%p_K, pb%mesh%intFront2glob_proc0(j,i), k)
+               end do
+            end do
+         end do
+
+      end if
+
+
       pb%f=spmatvec(pb%p_M,pb%f)
 
     end subroutine assemblage
@@ -140,7 +164,7 @@ module amsta01probleme
       integer, intent(in), optional :: id2
 
       integer, dimension(:), pointer :: indelim
-      integer :: n, nn, i, ii, j, id3
+      integer :: n, nn, i, ii, j
       real(kind=8) :: val
 
       pb%felim=pb%f-spmatvec(pb%p_K,pb%g)
@@ -170,7 +194,7 @@ module amsta01probleme
          do j=1,n
             if (j /= i) then
                call delcoeff(pb%p_Kelim,i,j)
-            call delcoeff(pb%p_Kelim,j,i)
+               call delcoeff(pb%p_Kelim,j,i)
           end if
         end do
       end do
