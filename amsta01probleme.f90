@@ -54,26 +54,26 @@ module amsta01probleme
 
 
       do i=1,n
-         
+
         ! initialisation de la solution theorique, du second membre et de la condition aux limites
         x=pb%mesh%coords(i,1)
         y=pb%mesh%coords(i,2)
 
         ! pb%uexa(i) = pb%mesh%coords(i,1) ! Test 1
-        ! pb%uexa(i) = exp((x+y)/8)
-        pb%uexa(i) = x*(6-x)*y*(2-y)
-        
+        pb%uexa(i) = exp((x+y)/8)
+        ! pb%uexa(i) = x*(6-x)*y*(2-y)
+
         ! -f est la fonction égale au laplacien
-        ! pb%f(i) = exp((x+y)/8)/16
+        pb%f(i) = exp((x+y)/8)/16
         ! pb%f(i) = 0
-        pb%f(i) = 2*(x*(6-x)+y*(2-y))
-        
+        ! pb%f(i) = 2*(x*(6-x)+y*(2-y))
+
 
         ! g est la restruction de uexa sur le bord
         if (pb%mesh%refNodes(i) == 1 .OR. pb%mesh%refNodes(i) == -3 ) then
           pb%g(i)=pb%uexa(i)
        end if
-       
+
       end do
 
 
@@ -134,26 +134,26 @@ module amsta01probleme
     subroutine pelim(pb,id,id2)
 
       implicit none
-      
+
       type(probleme), intent(inout) :: pb
       integer, intent(in) :: id
       integer, intent(in), optional :: id2
-      
+
       integer, dimension(:), pointer :: indelim
       integer :: n, nn, i, ii, j, id3
       real(kind=8) :: val
-      
+
       pb%felim=pb%f-spmatvec(pb%p_K,pb%g)
       pb%p_Kelim=pb%p_K
 
       n=pb%mesh%nbNodes
 
-      if(present(id2)) then 
+      if(present(id2)) then
          nn=count(pb%mesh%refNodes == id) + count(pb%mesh%refNodes == id2)
       else
          nn=count(pb%mesh%refNodes == id)
       end if
-      
+
       allocate(indelim(nn))
 
       if(present(id2)) then
@@ -161,7 +161,7 @@ module amsta01probleme
       else
          indelim=pack((/ (i, i=1,n) /), pb%mesh%refNodes == id)
       end if
-         
+
 
       do ii=1,nn
          i=indelim(ii)
@@ -251,11 +251,11 @@ module amsta01probleme
 
 
 
-    
+
 
     ! calcul de la solution du problème par Jacobi
     subroutine solveJacobi(pb, eps, conv, myRank, nbSsDomaine, ierr)
-      
+
       implicit none
 
       ! Variables d'entree et de sortie
@@ -263,7 +263,7 @@ module amsta01probleme
       real, intent(in)              :: eps           ! Critere de convergence pour la methode
       logical, intent(out)          :: conv          ! Logique permettant de savoir si on a converge
       integer, intent(in)           :: myRank, ierr  ! Variables MPI
-      integer, intent(in)           :: nbSsDomaine 
+      integer, intent(in)           :: nbSsDomaine
 
       ! Variable locale MPI
       integer, dimension(MPI_STATUS_SIZE)         :: status
@@ -271,8 +271,8 @@ module amsta01probleme
       ! Variables locales
       type(matsparse)                       :: N, M_inv    ! Matrice N et inverse de M avec K=M-N
       real(kind=8), dimension(:), pointer   :: rk, uk      ! Itere de la solution et residu
-      real(kind=8), dimension(:), pointer   :: uk_prime, uk_sec, uk_tri  
-      real(kind=8)                          :: norm, sum       ! Norme du residu
+      real(kind=8), dimension(:), pointer   :: uk_prime, uk_sec, uk_tri
+      real(kind=8)                          :: norm, norm_init, sum       ! Norme du residu
       integer                               :: n_size,i,k,j,errcode  ! Taille probleme et variables boucles
 
 
@@ -295,20 +295,33 @@ module amsta01probleme
          if(coeff(pb%p_Kelim, i,i) /= 0) call setcoeff(M_inv,i,i,(1.0d0)/(coeff(pb%p_Kelim, i,i)))
       end do
 
-      
+
 
       ! Initialisation du vecteur solution
-      uk = 1.d0
+      uk = 0.d0
+
+      ! Vecteur residu initial
+      rk = spmatvec(pb%p_Kelim, uk) - pb%felim
+
+      ! Produit scalaire pour un domaine donne
+      sum = dot_product(rk,rk)
+
+      ! On fait la somme et on redistribue a tout le monde
+      call MPI_ALLREDUCE(sum, norm, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
+
+      ! norme intiale
+      norm_init = dsqrt(norm)
 
 
-      
+
+
       ! on alloue le vecteur uk_prime qui contient les noeuds à envoyer
       allocate(uk_prime(size(pb%mesh%int2glob)))
       ! on alloue le vecteur uk_prime qui contient les noeuds à envoyer
       if(myRank /= 0) allocate(uk_sec(size(pb%mesh%intFront2glob)))
       if(myRank == 0) allocate(uk_sec(size(pb%mesh%intFront2glob_proc0(1,:))))
       allocate(uk_tri(size(uk)))
-      
+
 
       ! On preferera faire une boucle do pour ne pas avoir de fuite. On sort avec un exit.
       do  k = 1,5000
@@ -316,23 +329,25 @@ module amsta01probleme
          ! Iteration de uk
          uk = spmatvec(M_inv,spmatvec(N,uk)) + spmatvec(M_inv,pb%felim)
 
+
+
          uk_tri = uk
-         
+
          ! on remplit le vecteur uk_prime des noeuds à envoyer grâce à int2glob sur le proc 0 (interface)
          if (myRank == 0) uk_prime(:) = uk(pb%mesh%int2glob(:))
          ! on envoit uk_prime de 0 vers les autres proc
-         call MPI_Bcast(uk_prime, size(uk_prime), MPI_DOUBLE, 0, MPI_COMM_WORLD, ierr)
+         call MPI_BCAST(uk_prime, size(uk_prime), MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
          ! on réaffecte chaque noeud de l'interface pour uk sur chaque processeur
          uk(pb%mesh%int2glob(:)) = uk_prime(:)
-       
-         
+
+
          if (myRank == 0) then
             do i=1,nbSsDomaine
 
                uk_sec = 0
 
                call MPI_RECV(uk_sec, size(uk_sec), &
-                    MPI_DOUBLE, i, 100, MPI_COMM_WORLD, status, ierr)
+                    MPI_DOUBLE_PRECISION, i, 100, MPI_COMM_WORLD, status, ierr)
 
                do j = 1,size(pb%mesh%intFront2glob_proc0(i,:))
                   if(pb%mesh%intFront2glob_proc0(i,j) /= 0) uk(pb%mesh%intFront2glob_proc0(i,j)) = uk_sec(j)
@@ -343,26 +358,16 @@ module amsta01probleme
          else
             uk_sec(:) = uk(pb%mesh%intFront2glob(:))
             call MPI_SEND(uk_sec, size(pb%mesh%intFront2glob(:)), &
-                 MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, ierr)
-         end if
-         
-
-
-         if (myRank == 0 .AND. k == 5) then
-            do j=1,n_size
-               if (uk(j) /= uk_tri(j)) write(*,*) 'Changement pour : ', j
-            end do
+                 MPI_DOUBLE_PRECISION, 0, 100, MPI_COMM_WORLD, ierr)
          end if
 
 
-         
-         
-         
+
          ! Calcul de la norme de du residu pour observer la convergence
          ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ?
 
          if (mod(k,20) == 0) then
-            
+
             ! Calcul de residu et de la norme
             rk = spmatvec(pb%p_Kelim, uk) - pb%felim
 
@@ -377,13 +382,13 @@ module amsta01probleme
 
 
             ! On fait la somme et on redistribue a tout le monde
-            call MPI_ALLREDUCE(sum, norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, ierr)
+            call MPI_ALLREDUCE(sum, norm, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
 
-            ! Calcul de la norme 
+            ! Calcul de la norme
             norm = dsqrt(norm)
 
             ! Si jamais on a atteint le critère de convergence on sort de la boucle
-            if (norm < eps) then
+            if (norm < eps*norm_init) then
                conv = .TRUE.
                if(myRank == 0) write(*,*)
                if(myRank == 0) write(*,*) 'INFO    : Precision attendue pour la convergence : ', eps
@@ -391,8 +396,8 @@ module amsta01probleme
                exit
             end if
 
-      end if
-         
+         end if
+
       end do
 
 
@@ -402,9 +407,9 @@ module amsta01probleme
       do j=1,n_size
          if(pb%mesh%refPartNodes(j) /= myRank) uk(j) = 0
       end do
-      
+
       ! On recupere tout sur le processeur 0
-      call MPI_REDUCE(uk, pb%u, n_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+      call MPI_REDUCE(uk, pb%u, n_size, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
 
       ! On desallocate les matrice creees
       deallocate(uk,rk)
@@ -414,7 +419,6 @@ module amsta01probleme
 
 
 
-  
 
 
 
@@ -507,8 +511,8 @@ module amsta01probleme
 
       character(len=300) :: filename, n1, n2, tmp
       integer :: i
-      
-      
+
+
       filename="sol.vtu"
       if (present(fname)) then
          filename=fname
