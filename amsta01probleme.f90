@@ -62,7 +62,8 @@ module amsta01probleme
         ! pb%uexa(i) = pb%mesh%coords(i,1) ! Test 1
         pb%uexa(i) = exp((x+y)/8)
         ! pb%uexa(i) = x*(6-x)*y*(2-y)
-
+        ! pb%uexa(i) = 0
+         
         ! -f est la fonction égale au laplacien
         pb%f(i) = exp((x+y)/8)/16
         ! pb%f(i) = 0
@@ -71,7 +72,38 @@ module amsta01probleme
 
         ! g est la restruction de uexa sur le bord
         if (pb%mesh%refNodes(i) == 1 .OR. pb%mesh%refNodes(i) == -3 ) then
-          pb%g(i)=pb%uexa(i)
+
+           pb%g(i)=pb%uexa(i)
+
+
+           ! if ( y < 0.5 .OR. y > 3.5) then
+              
+           !    if (x < 2) then 
+           !       pb%g(i) = 0.d0
+           !    else if (x >= 2 .AND. x < 10) then 
+           !       pb%g(i) = (100.d0/8.d0)*(x-2)
+           !    else if (x >= 10) then
+           !       pb%g(i) = 100.d0
+           !    end if
+
+           ! else
+
+           !    if (x < 3.5 .AND. x /= 0) then 
+           !       pb%g(i) = 120.d0
+           !    else if (x  >= 3.5 .AND. x /= 12) then 
+           !       pb%g(i) = 50.d0
+           !    else if (x == 0) then
+           !       pb%g(i) = 0.d0
+           !    else if (x == 12) then
+           !       pb%g(i) = 100.d0
+                 
+           !    end if
+              
+           ! end if
+
+           
+       
+         
        end if
 
       end do
@@ -97,8 +129,6 @@ module amsta01probleme
 
       nt=pb%mesh%nbTri
 
-      write(*,*) 'nt = ', nt
-
       do i=1,nt
 
          s=pb%mesh%triVertices(i,1:3)
@@ -119,7 +149,6 @@ module amsta01probleme
 
       call sort(pb%p_K)
       call sort(pb%p_M)
-
 
 
       ! Elimination des lignes incompletes
@@ -320,6 +349,13 @@ module amsta01probleme
       end do
 
 
+       
+      ! On enleve les donnees inutiles dans felim
+      do j=1,n_size
+         if(pb%mesh%refPartNodes(j) /= myRank) pb%felim(j) = 0
+      end do
+      
+
 
       ! Initialisation du vecteur solution
       uk = 0.d0
@@ -338,7 +374,6 @@ module amsta01probleme
 
 
 
-
       ! on alloue le vecteur uk_prime qui contient les noeuds à envoyer
       allocate(uk_prime(size(pb%mesh%int2glob)))
       ! on alloue le vecteur uk_prime qui contient les noeuds à envoyer
@@ -352,8 +387,6 @@ module amsta01probleme
 
          ! Iteration de uk
          uk = spmatvec(M_inv,spmatvec(N,uk)) + spmatvec(M_inv,pb%felim)
-
-
 
          uk_tri = uk
 
@@ -389,8 +422,7 @@ module amsta01probleme
 
          ! Calcul de la norme de du residu pour observer la convergence
          ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ?
-
-         if (mod(k,20) == 0) then
+         if (mod(k,10) == 0) then
 
             ! Calcul de residu et de la norme
             rk = spmatvec(pb%p_Kelim, uk) - pb%felim
@@ -449,72 +481,193 @@ module amsta01probleme
 
 
     ! Calcul de la solution par algorithme de Gauss-Seidel
-    subroutine solveGaussSeidel(pb, eps, conv)
+    subroutine solveGaussSeidel(pb, eps, conv, myRank, nbSsDomaine, ierr)
 
       implicit none
 
       type(probleme), intent(inout) :: pb
       real, intent(in)              :: eps
       logical, intent(out)          :: conv
+      integer, intent(in)           :: myRank, ierr  ! Variables MPI
+      integer, intent(in)           :: nbSsDomaine
+
+      ! Variable locale MPI
+      integer, dimension(MPI_STATUS_SIZE)         :: status
 
       ! Variables locales
-      type(matsparse)                     :: M, N
-      real(kind=8), dimension(:), pointer :: rk, uk
-      real(kind=8)                        :: norm
-      integer                             :: n_size,i,k
+      type(matsparse)                      :: M, N, Add, AdDp
+      real(kind=8), dimension(:), pointer  :: rk, uk
+      real(kind=8), dimension(:), pointer  :: uk_prime, uk_sec, uk_tri
+      real(kind=8)                         :: norm, norm_init, sum    
+      integer                              :: n_size,i,k,j, errcode
+      logical :: supp
 
+
+      
       ! conv est mise a false par default
       conv = .FALSE.
+      supp = .TRUE.
 
       ! Osn recupere la taille du probleme avec elimination
       n_size = size(pb%felim)
 
       ! On alloue les valeurs des vecteurs solution et residu
       allocate(uk(n_size), rk(n_size))
+      
+      
+      call spcopy(Add,  pb%p_Kelim)
+      call spcopy(AdDp, pb%p_Kelim) 
+
+      
+      boucle_chCol0 : do j=1,n_size
+
+         do i=1,n_size
+            if (coeff(Add,j,i) /= 0) supp = .FALSE.
+         end do
+
+         if (supp .eqv. .TRUE.) then 
+            do i=1,n_size
+               call delcoeff(Add,i,j)
+            end do
+         else
+            do i=1,n_size
+               call delcoeff(AdDp,i,j)
+            end do
+         end if
+
+         supp = .TRUE.
+
+      end do boucle_chCol0
 
       ! Definition des matrices M et N. Attention K = M - N !
-      N = spmatscal(-1.d0, extract(pb%p_Kelim, pb%p_Kelim%i < pb%p_Kelim%j))
-      M = extract(pb%p_Kelim, pb%p_Kelim%i >= pb%p_Kelim%j)
+      N = spmatscal(-1.d0, extract(Add, Add%i < Add%j))
+      M = extract(Add, Add%i >= Add%j)
 
 
+      
+      ! On enleve les donnees inutiles dans felim
+      do j=1,n_size
+         if(pb%mesh%refPartNodes(j) /= myRank) pb%felim(j) = 0
+      end do
+      
+      
       ! Initialisation du vecteur solution
-      uk = 1.d0
+      uk = 0.d0
 
+      ! Vecteur residu initial
+      rk = spmatvec(pb%p_Kelim, uk) - pb%felim
 
+      ! Produit scalaire pour un domaine donne
+      sum = dot_product(rk,rk)
+
+      ! On fait la somme et on redistribue a tout le monde
+      call MPI_ALLREDUCE(sum, norm, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
+
+      ! norme intiale
+      norm_init = dsqrt(norm)
+      
+      
+      ! On alloue le vecteur uk_prime qui contient les noeuds a envoyer
+      allocate(uk_prime(size(pb%mesh%int2glob)))
+      
+      ! On alloue le vecteur uk_sec qui contient les noeuds a envoyer
+      if(myRank /= 0) allocate(uk_sec(size(pb%mesh%intFront2glob)))
+      if(myRank == 0) allocate(uk_sec(size(pb%mesh%intFront2glob_proc0(1,:))))
+
+      
+      
       ! On preferera faire une boucle do pour ne pas avoir de fuite. On sort avec un exit.
-      do  k = 1,1000
+      do  k = 1,5000
+         
+         if (myRank /= 0) then
 
-         ! Iteration de uk
-         uk = spmatvec(N,uk) + pb%felim
-         uk = downSolve(M,uk)
+            ! Iteration de uk
+            uk = spmatvec(N,uk) + pb%felim - spmatvec(AdDp,uk) 
+            uk = downSolve(M,uk,.TRUE.)
+            
+            
+            uk_sec(:) = uk(pb%mesh%intFront2glob(:))
+            call MPI_SEND(uk_sec, size(pb%mesh%intFront2glob(:)), &
+                 MPI_DOUBLE_PRECISION, 0, 100, MPI_COMM_WORLD, ierr)
 
+         else if (myRank == 0) then 
+
+            uk = spmatvec(N,uk) + pb%felim
+
+            do i=1,nbSsDomaine
+
+               uk_sec = 0
+
+               call MPI_RECV(uk_sec, size(uk_sec), &
+                    MPI_DOUBLE_PRECISION, i, 100, MPI_COMM_WORLD, status, ierr)
+
+               do j = 1,size(pb%mesh%intFront2glob_proc0(i,:))
+                  if(pb%mesh%intFront2glob_proc0(i,j) /= 0) uk(pb%mesh%intFront2glob_proc0(i,j)) = uk_sec(j)
+               end do
+
+            end do
+
+            ! Alorithme de descente modifié dans notre cas
+            uk = downsolve(M, uk - spmatvec(AdDp,uk),.TRUE., uk, AdDp)
+
+         end if
+
+         
+         ! On remplit le vecteur uk_prime des noeuds a envoyer grace à int2glob sur le proc 0 (interface)
+         if(myRank == 0) uk_prime(:) = uk(pb%mesh%int2glob(:))
+         ! on envoit uk_prime de 0 vers les autres proc
+         call MPI_BCAST(uk_prime, size(uk_prime), MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+         ! on reaffecte chaque noeud de l'interface pour uk sur chaque processeur
+         if(myRank /= 0) uk(pb%mesh%int2glob(:)) = uk_prime(:)
+         
+
+         
          ! Calcul de la norme de du residu pour observer la convergence
          ! On fait ce calcul toutes les 10 iterations pour aller plus vite. Utile ?
-          if (mod(k,10) == 0) then
+         if (mod(k,10) == 0) then
 
             ! Calcul de residu et de la norme
-            rk = pb%felim - spmatvec(pb%p_Kelim, uk)
-            norm = dsqrt(dot_product(rk, rk))
+            rk = spmatvec(pb%p_Kelim, uk) - pb%felim
+
+            ! Produit scalaire pour un domaine donne
+            sum = dot_product(rk,rk)
+
+            ! On fait la somme et on redistribue a tout le monde
+            call MPI_ALLREDUCE(sum, norm, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
+
+            ! Calcul de la norme
+            norm = dsqrt(norm)
 
             ! Si jamais on a atteint le critère de convergence on sort de la boucle
-            if (norm < eps) then
+            if (norm < eps*norm_init) then
                conv = .TRUE.
-               write(*,*) 'INFO    : Precision attendue pour la convergence : ', eps
-               write(*,*) 'INFO    : Convergence apres ', k, ' iterations de la methode de Gauss Seidel'
+               if(myRank == 0) write(*,*) 'INFO    : Precision attendue pour la convergence : ', eps
+               if(myRank == 0) write(*,*) 'INFO    : Convergence apres ', k, ' iterations de la methode de Gauss Seidel'
                exit
             end if
 
-          end if
+         end if
       end do
 
 
-      ! On donne a la solution la valeur du dernier itere
-      pb%u = uk
+      ! On recompose la solution avec les donnees de chaque processeur
+      ! Si le sommet n'appartient pas au sous domaine alors on met uk a 0
+      ! On pourrait avoir des problemes pour des sommets aux frontieres
+      do j=1,n_size
+         if(pb%mesh%refPartNodes(j) /= myRank) uk(j) = 0
+      end do
+
+      ! On recupere tout sur le processeur 0
+      call MPI_REDUCE(uk, pb%u, n_size, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
 
       ! On desallocate les matrice creees
-      deallocate(uk,rk)
+      deallocate(uk,rk,uk_prime,uk_sec)
 
     end subroutine solveGaussSeidel
+
+
+
+
 
 
 

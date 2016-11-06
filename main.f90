@@ -10,10 +10,10 @@ program main
   type(maillage)                       :: mail
   type(probleme)                       :: pb
   type(matsparse)                      :: Kt, Mt
-  real(kind=8)                         :: erreur
+  real(kind=8)                         :: erreur, erreur_res
   real(kind=8), dimension(:), pointer  :: residu
   logical                              :: conv
-  integer                              :: nbSsDomaine
+  integer                              :: nbSsDomaine, j
   character(len=100)                   :: filename
   real                                 :: time_1, time_2
 
@@ -103,12 +103,25 @@ program main
      write(*,*) '-----------------------------------------------------------'
      write(*,*) 'Erreur theorique attendu :'
 
-     ! calcul du residu theorique
-     allocate(residu(mail%nbNodes))
-     residu=pb%felim-pb%p_Kelim*pb%uexa
-     erreur=dsqrt(dot_product(residu,residu))
-     print *, "Erreur theorique=", erreur
+  end if
 
+
+  ! A modifier, ceci ne veut rien dire ici puisque l'on est
+  ! sur un seul processeur. Il faudrait reconstruire entièrement
+  ! la matrice p_Kelim pour avoir quelque chose de bon
+
+  ! calcul du residu theorique
+  ! allocate(residu(mail%nbNodes))
+  ! residu=pb%felim-pb%p_Kelim*pb%uexa
+  ! erreur=dot_product(residu,residu)
+  
+  ! call MPI_REDUCE(erreur, erreur_res, 1, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+  
+  if (myRank == 0) then
+
+     !erreur_res = sqrt(erreur_res) 
+
+     print *, "Residu theorique=" ! ,  erreur_res
 
      write(*,*) '-----------------------------------------------------------'
      write(*,*) 'Resolution du systeme lineaire : '
@@ -116,26 +129,42 @@ program main
   end if
 
 
-  ! Resolution par jacobi
-  call solveJacobi(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
+  ! Resolution par Jacobi
+  ! call solveJacobi(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
 
   ! Resolution par Gauss Seidel
-  ! call solveGaussSeidel(pb, 0.000001, conv)
+  call solveGaussSeidel(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
+
 
 
   if(myRank == 0) then
 
+     if(conv .eqv. .FALSE.) then
+        write (*,*) 'WARNING : Il n y a pas eu convergence vers la solution'
+     end if
+     
      write(*,*) '-----------------------------------------------------------'
      write(*,*) 'Calcul du residu reel et de l erreur :'
 
-     ! calcul du residu
-     residu=pb%felim-pb%p_Kelim*pb%u
-     erreur=dsqrt(dot_product(residu,residu))
-     print *, "Residu=", erreur
+  end if
 
+  
+  ! calcul du residu
+  ! residu=pb%felim-pb%p_Kelim*pb%u
+  ! erreur=dot_product(residu,residu)
+
+
+
+  if (myRank == 0) then
+     
+     !erreur_res = dsqrt(erreur_res) 
+     !print *, "Residu=", erreur_res
+     
      ! calcul de l'erreur L2
-     erreur=dsqrt(dot_product(pb%uexa-pb%u,pb%uexa-pb%u))
-     print *, "||u-uexa||_2=", erreur
+     erreur_res=dsqrt(dot_product(pb%uexa-pb%u,pb%uexa-pb%u))
+
+
+     print *, "||u-uexa||_2=", erreur_res
 
 
      write(*,*) '-----------------------------------------------------------'
@@ -146,10 +175,17 @@ program main
   end if
 
 
-  ! sauvegarde de la solution et de la solution theorique
+  ! Sauvegarde de la solution et de la solution theorique
   if (myRank == 0) call saveToVtu(pb%mesh,pb%u,pb%uexa)
-  if (myRank == 0) write(*,*) pb%u - pb%uexa
 
+  ! Verification des resultats
+  ! if (myRank == 0) write(*,*) pb%u - pb%uexa
+  ! if (myRank == 0) then
+  !    do j=1,size(pb%u)
+  !       write(*,*) pb%u(j),j
+  !    end do
+  ! end if
+  
   call MPI_FINALIZE(ierr)
 
 

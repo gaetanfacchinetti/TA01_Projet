@@ -1,2 +1,2 @@
-testpart3.msh
-20
+essaiGmsh.msh
+3
