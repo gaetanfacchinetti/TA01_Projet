@@ -93,8 +93,8 @@ program main
   call assemblage(pb, myRank)
 
   ! pseudo-elimination des conditions essentielles
-  if (myRank /= 0) call pelim(pb, mail%refNodes(1),-3)
-  if (myRank == 0) call pelim(pb, mail%refNodes(1),-3)
+  if (myRank /= 0) call pelim(pb, myRank,  mail%refNodes(1),-3)
+  if (myRank == 0) call pelim(pb, myRank, mail%refNodes(1),-3)
 
 
 

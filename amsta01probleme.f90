@@ -184,12 +184,12 @@ module amsta01probleme
     ! pseudo-élimination des conditions essentielles
     !     pb : problème sur lequel appliquer la pseudo-élimination
     !     id : numéro du domaine de bord
-    subroutine pelim(pb,id,id2)
+    subroutine pelim(pb,myRank,id,id2)
 
       implicit none
 
       type(probleme), intent(inout) :: pb
-      integer, intent(in) :: id
+      integer, intent(in) :: myRank, id
       integer, intent(in), optional :: id2
 
       integer, dimension(:), pointer :: indelim
@@ -226,7 +226,16 @@ module amsta01probleme
                call delcoeff(pb%p_Kelim,j,i)
           end if
         end do
+     end do
+
+
+          
+      ! On enleve les donnees inutiles dans felim
+      do j=1,size(pb%felim)
+         if(pb%mesh%refPartNodes(j) /= myRank) pb%felim(j) = 0
       end do
+
+      
     end subroutine pelim
 
 
@@ -349,13 +358,7 @@ module amsta01probleme
       end do
 
 
-       
-      ! On enleve les donnees inutiles dans felim
-      do j=1,n_size
-         if(pb%mesh%refPartNodes(j) /= myRank) pb%felim(j) = 0
-      end do
-      
-
+ 
 
       ! Initialisation du vecteur solution
       uk = 0.d0
@@ -542,13 +545,6 @@ module amsta01probleme
       ! Definition des matrices M et N. Attention K = M - N !
       N = spmatscal(-1.d0, extract(Add, Add%i < Add%j))
       M = extract(Add, Add%i >= Add%j)
-
-
-      
-      ! On enleve les donnees inutiles dans felim
-      do j=1,n_size
-         if(pb%mesh%refPartNodes(j) /= myRank) pb%felim(j) = 0
-      end do
       
       
       ! Initialisation du vecteur solution
