@@ -1,202 +1,100 @@
  !!!! -------- Info tris  -------- !!!!
 
- Il y a          198  triangles au total
+ Il y a           96  triangles au total
 
- Triangle numero :           37  | triPartRef :            1           0           0
- Triangle numero :           38  | triPartRef :            1           0           0
- Triangle numero :           39  | triPartRef :            3           0           0
- Triangle numero :           40  | triPartRef :            2           0           0
- Triangle numero :           41  | triPartRef :            2           0           0
- Triangle numero :           42  | triPartRef :            1          -3           0
- Triangle numero :           43  | triPartRef :            2           0           0
- Triangle numero :           44  | triPartRef :            2           0           0
- Triangle numero :           45  | triPartRef :            1           0           0
- Triangle numero :           46  | triPartRef :            1           0           0
- Triangle numero :           47  | triPartRef :            1           0           0
- Triangle numero :           48  | triPartRef :            1          -3           0
- Triangle numero :           49  | triPartRef :            1           0           0
- Triangle numero :           50  | triPartRef :            3           0           0
- Triangle numero :           51  | triPartRef :            2           0           0
- Triangle numero :           52  | triPartRef :            2           0           0
- Triangle numero :           53  | triPartRef :            2           0           0
- Triangle numero :           54  | triPartRef :            2           0           0
- Triangle numero :           55  | triPartRef :            1           0           0
- Triangle numero :           56  | triPartRef :            1           0           0
- Triangle numero :           57  | triPartRef :            1           0           0
- Triangle numero :           58  | triPartRef :            1           0           0
- Triangle numero :           59  | triPartRef :            1           0           0
- Triangle numero :           60  | triPartRef :            1           0           0
- Triangle numero :           61  | triPartRef :            2          -1           0
- Triangle numero :           62  | triPartRef :            2          -1          -3
- Triangle numero :           63  | triPartRef :            1          -2          -3
- Triangle numero :           64  | triPartRef :            2           0           0
- Triangle numero :           65  | triPartRef :            3          -1           0
- Triangle numero :           66  | triPartRef :            2          -3           0
- Triangle numero :           67  | triPartRef :            3          -2           0
- Triangle numero :           68  | triPartRef :            2           0           0
- Triangle numero :           69  | triPartRef :            2          -1           0
- Triangle numero :           70  | triPartRef :            3           0           0
- Triangle numero :           71  | triPartRef :            3           0           0
- Triangle numero :           72  | triPartRef :            2          -3           0
- Triangle numero :           73  | triPartRef :            3          -2           0
- Triangle numero :           74  | triPartRef :            2           0           0
- Triangle numero :           75  | triPartRef :            2           0           0
- Triangle numero :           76  | triPartRef :            2           0           0
- Triangle numero :           77  | triPartRef :            2          -3           0
- Triangle numero :           78  | triPartRef :            3          -2           0
- Triangle numero :           79  | triPartRef :            3           0           0
- Triangle numero :           80  | triPartRef :            3          -2           0
- Triangle numero :           81  | triPartRef :            3          -2           0
- Triangle numero :           82  | triPartRef :            2           0           0
- Triangle numero :           83  | triPartRef :            3          -2           0
- Triangle numero :           84  | triPartRef :            2           0           0
- Triangle numero :           85  | triPartRef :            1          -3           0
- Triangle numero :           86  | triPartRef :            1           0           0
- Triangle numero :           87  | triPartRef :            3          -2           0
- Triangle numero :           88  | triPartRef :            3          -2           0
- Triangle numero :           89  | triPartRef :            1           0           0
- Triangle numero :           90  | triPartRef :            1          -2           0
- Triangle numero :           91  | triPartRef :            2          -1           0
- Triangle numero :           92  | triPartRef :            1          -3           0
- Triangle numero :           93  | triPartRef :            1          -3           0
- Triangle numero :           94  | triPartRef :            3          -1           0
- Triangle numero :           95  | triPartRef :            3           0           0
- Triangle numero :           96  | triPartRef :            1           0           0
- Triangle numero :           97  | triPartRef :            1          -2           0
- Triangle numero :           98  | triPartRef :            1           0           0
- Triangle numero :           99  | triPartRef :            1           0           0
- Triangle numero :          100  | triPartRef :            1           0           0
- Triangle numero :          101  | triPartRef :            3           0           0
- Triangle numero :          102  | triPartRef :            3           0           0
- Triangle numero :          103  | triPartRef :            1           0           0
- Triangle numero :          104  | triPartRef :            1           0           0
- Triangle numero :          105  | triPartRef :            1           0           0
- Triangle numero :          106  | triPartRef :            1           0           0
- Triangle numero :          107  | triPartRef :            1           0           0
- Triangle numero :          108  | triPartRef :            1           0           0
- Triangle numero :          109  | triPartRef :            3           0           0
- Triangle numero :          110  | triPartRef :            3           0           0
- Triangle numero :          111  | triPartRef :            3           0           0
- Triangle numero :          112  | triPartRef :            3           0           0
- Triangle numero :          113  | triPartRef :            3           0           0
- Triangle numero :          114  | triPartRef :            1           0           0
- Triangle numero :          115  | triPartRef :            1           0           0
- Triangle numero :          116  | triPartRef :            3          -1           0
- Triangle numero :          117  | triPartRef :            3          -1           0
- Triangle numero :          118  | triPartRef :            2           0           0
- Triangle numero :          119  | triPartRef :            2           0           0
- Triangle numero :          120  | triPartRef :            2           0           0
- Triangle numero :          121  | triPartRef :            2           0           0
- Triangle numero :          122  | triPartRef :            2          -3           0
- Triangle numero :          123  | triPartRef :            2          -3           0
- Triangle numero :          124  | triPartRef :            2          -1           0
- Triangle numero :          125  | triPartRef :            2          -3           0
- Triangle numero :          126  | triPartRef :            2          -3           0
- Triangle numero :          127  | triPartRef :            1          -2          -3
- Triangle numero :          128  | triPartRef :            2          -1          -3
- Triangle numero :          129  | triPartRef :            3          -1          -2
- Triangle numero :          130  | triPartRef :            3          -1          -2
- Triangle numero :          131  | triPartRef :            1           0           0
- Triangle numero :          132  | triPartRef :            1           0           0
- Triangle numero :          133  | triPartRef :            2           0           0
- Triangle numero :          134  | triPartRef :            2          -3           0
- Triangle numero :          135  | triPartRef :            2          -3           0
- Triangle numero :          136  | triPartRef :            2          -3           0
- Triangle numero :          137  | triPartRef :            3          -2           0
- Triangle numero :          138  | triPartRef :            3           0           0
- Triangle numero :          139  | triPartRef :            3           0           0
- Triangle numero :          140  | triPartRef :            3           0           0
- Triangle numero :          141  | triPartRef :            3           0           0
- Triangle numero :          142  | triPartRef :            1          -2           0
- Triangle numero :          143  | triPartRef :            3           0           0
- Triangle numero :          144  | triPartRef :            3           0           0
- Triangle numero :          145  | triPartRef :            1          -2           0
- Triangle numero :          146  | triPartRef :            1          -2           0
- Triangle numero :          147  | triPartRef :            3           0           0
- Triangle numero :          148  | triPartRef :            3          -2           0
- Triangle numero :          149  | triPartRef :            3           0           0
- Triangle numero :          150  | triPartRef :            3           0           0
- Triangle numero :          151  | triPartRef :            1           0           0
- Triangle numero :          152  | triPartRef :            1           0           0
- Triangle numero :          153  | triPartRef :            3           0           0
- Triangle numero :          154  | triPartRef :            3           0           0
- Triangle numero :          155  | triPartRef :            3           0           0
- Triangle numero :          156  | triPartRef :            3           0           0
- Triangle numero :          157  | triPartRef :            2           0           0
- Triangle numero :          158  | triPartRef :            2           0           0
- Triangle numero :          159  | triPartRef :            2           0           0
- Triangle numero :          160  | triPartRef :            2          -1           0
- Triangle numero :          161  | triPartRef :            1          -2           0
- Triangle numero :          162  | triPartRef :            1          -2           0
- Triangle numero :          163  | triPartRef :            2           0           0
- Triangle numero :          164  | triPartRef :            1           0           0
- Triangle numero :          165  | triPartRef :            1           0           0
- Triangle numero :          166  | triPartRef :            1           0           0
- Triangle numero :          167  | triPartRef :            1           0           0
- Triangle numero :          168  | triPartRef :            1           0           0
- Triangle numero :          169  | triPartRef :            1           0           0
- Triangle numero :          170  | triPartRef :            3           0           0
- Triangle numero :          171  | triPartRef :            3           0           0
- Triangle numero :          172  | triPartRef :            1          -3           0
- Triangle numero :          173  | triPartRef :            1          -3           0
- Triangle numero :          174  | triPartRef :            3          -1           0
- Triangle numero :          175  | triPartRef :            3          -2           0
- Triangle numero :          176  | triPartRef :            3           0           0
- Triangle numero :          177  | triPartRef :            3           0           0
- Triangle numero :          178  | triPartRef :            3           0           0
- Triangle numero :          179  | triPartRef :            3          -1           0
- Triangle numero :          180  | triPartRef :            1          -3           0
- Triangle numero :          181  | triPartRef :            1          -3           0
- Triangle numero :          182  | triPartRef :            1          -3           0
- Triangle numero :          183  | triPartRef :            3           0           0
- Triangle numero :          184  | triPartRef :            3           0           0
- Triangle numero :          185  | triPartRef :            3           0           0
- Triangle numero :          186  | triPartRef :            3           0           0
- Triangle numero :          187  | triPartRef :            1           0           0
- Triangle numero :          188  | triPartRef :            1           0           0
- Triangle numero :          189  | triPartRef :            1           0           0
- Triangle numero :          190  | triPartRef :            2           0           0
- Triangle numero :          191  | triPartRef :            2           0           0
- Triangle numero :          192  | triPartRef :            2          -1           0
- Triangle numero :          193  | triPartRef :            1           0           0
- Triangle numero :          194  | triPartRef :            1           0           0
- Triangle numero :          195  | triPartRef :            1          -2           0
- Triangle numero :          196  | triPartRef :            1          -2           0
- Triangle numero :          197  | triPartRef :            3           0           0
- Triangle numero :          198  | triPartRef :            3           0           0
- Triangle numero :          199  | triPartRef :            3           0           0
- Triangle numero :          200  | triPartRef :            2           0           0
- Triangle numero :          201  | triPartRef :            2           0           0
- Triangle numero :          202  | triPartRef :            2           0           0
- Triangle numero :          203  | triPartRef :            2           0           0
- Triangle numero :          204  | triPartRef :            2           0           0
- Triangle numero :          205  | triPartRef :            2           0           0
- Triangle numero :          206  | triPartRef :            2           0           0
- Triangle numero :          207  | triPartRef :            3          -2           0
- Triangle numero :          208  | triPartRef :            3          -2           0
- Triangle numero :          209  | triPartRef :            3           0           0
- Triangle numero :          210  | triPartRef :            3          -1           0
- Triangle numero :          211  | triPartRef :            3          -1           0
- Triangle numero :          212  | triPartRef :            3           0           0
- Triangle numero :          213  | triPartRef :            3           0           0
- Triangle numero :          214  | triPartRef :            3           0           0
- Triangle numero :          215  | triPartRef :            1           0           0
- Triangle numero :          216  | triPartRef :            1           0           0
- Triangle numero :          217  | triPartRef :            1           0           0
- Triangle numero :          218  | triPartRef :            1          -2           0
- Triangle numero :          219  | triPartRef :            2          -1           0
- Triangle numero :          220  | triPartRef :            2          -1           0
- Triangle numero :          221  | triPartRef :            2           0           0
- Triangle numero :          222  | triPartRef :            2           0           0
- Triangle numero :          223  | triPartRef :            2           0           0
- Triangle numero :          224  | triPartRef :            2           0           0
- Triangle numero :          225  | triPartRef :            2           0           0
- Triangle numero :          226  | triPartRef :            2          -3           0
- Triangle numero :          227  | triPartRef :            2          -3           0
- Triangle numero :          228  | triPartRef :            2          -3           0
- Triangle numero :          229  | triPartRef :            2           0           0
- Triangle numero :          230  | triPartRef :            2           0           0
- Triangle numero :          231  | triPartRef :            2           0           0
- Triangle numero :          232  | triPartRef :            2           0           0
- Triangle numero :          233  | triPartRef :            2           0           0
- Triangle numero :          234  | triPartRef :            2           0           0
+ Triangle numero :           33  | triPartRef :            2           0
+ Triangle numero :           34  | triPartRef :            2           0
+ Triangle numero :           35  | triPartRef :            2           0
+ Triangle numero :           36  | triPartRef :            2           0
+ Triangle numero :           37  | triPartRef :            2           0
+ Triangle numero :           38  | triPartRef :            2           0
+ Triangle numero :           39  | triPartRef :            2           0
+ Triangle numero :           40  | triPartRef :            2           0
+ Triangle numero :           41  | triPartRef :            2           0
+ Triangle numero :           42  | triPartRef :            2           0
+ Triangle numero :           43  | triPartRef :            2           0
+ Triangle numero :           44  | triPartRef :            2           0
+ Triangle numero :           45  | triPartRef :            2           0
+ Triangle numero :           46  | triPartRef :            2           0
+ Triangle numero :           47  | triPartRef :            2           0
+ Triangle numero :           48  | triPartRef :            2           0
+ Triangle numero :           49  | triPartRef :            2           0
+ Triangle numero :           50  | triPartRef :            2           0
+ Triangle numero :           51  | triPartRef :            2           0
+ Triangle numero :           52  | triPartRef :            2           0
+ Triangle numero :           53  | triPartRef :            2           0
+ Triangle numero :           54  | triPartRef :            2           0
+ Triangle numero :           55  | triPartRef :            2           0
+ Triangle numero :           56  | triPartRef :            2           0
+ Triangle numero :           57  | triPartRef :            2           0
+ Triangle numero :           58  | triPartRef :            2           0
+ Triangle numero :           59  | triPartRef :            2           0
+ Triangle numero :           60  | triPartRef :            2           0
+ Triangle numero :           61  | triPartRef :            2           0
+ Triangle numero :           62  | triPartRef :            2           0
+ Triangle numero :           63  | triPartRef :            2           0
+ Triangle numero :           64  | triPartRef :            2           0
+ Triangle numero :           65  | triPartRef :            2           0
+ Triangle numero :           66  | triPartRef :            2           0
+ Triangle numero :           67  | triPartRef :            2           0
+ Triangle numero :           68  | triPartRef :            2           0
+ Triangle numero :           69  | triPartRef :            2           0
+ Triangle numero :           70  | triPartRef :            2          -1
+ Triangle numero :           71  | triPartRef :            2          -1
+ Triangle numero :           72  | triPartRef :            2          -1
+ Triangle numero :           73  | triPartRef :            2           0
+ Triangle numero :           74  | triPartRef :            2           0
+ Triangle numero :           75  | triPartRef :            2           0
+ Triangle numero :           76  | triPartRef :            2          -1
+ Triangle numero :           77  | triPartRef :            2          -1
+ Triangle numero :           78  | triPartRef :            1          -2
+ Triangle numero :           79  | triPartRef :            1          -2
+ Triangle numero :           80  | triPartRef :            1          -2
+ Triangle numero :           81  | triPartRef :            2          -1
+ Triangle numero :           82  | triPartRef :            2          -1
+ Triangle numero :           83  | triPartRef :            2          -1
+ Triangle numero :           84  | triPartRef :            1          -2
+ Triangle numero :           85  | triPartRef :            1          -2
+ Triangle numero :           86  | triPartRef :            1           0
+ Triangle numero :           87  | triPartRef :            1           0
+ Triangle numero :           88  | triPartRef :            1           0
+ Triangle numero :           89  | triPartRef :            1          -2
+ Triangle numero :           90  | triPartRef :            1          -2
+ Triangle numero :           91  | triPartRef :            1          -2
+ Triangle numero :           92  | triPartRef :            1           0
+ Triangle numero :           93  | triPartRef :            1           0
+ Triangle numero :           94  | triPartRef :            1           0
+ Triangle numero :           95  | triPartRef :            1           0
+ Triangle numero :           96  | triPartRef :            1           0
+ Triangle numero :           97  | triPartRef :            1           0
+ Triangle numero :           98  | triPartRef :            1           0
+ Triangle numero :           99  | triPartRef :            1           0
+ Triangle numero :          100  | triPartRef :            1           0
+ Triangle numero :          101  | triPartRef :            1           0
+ Triangle numero :          102  | triPartRef :            1           0
+ Triangle numero :          103  | triPartRef :            1           0
+ Triangle numero :          104  | triPartRef :            1           0
+ Triangle numero :          105  | triPartRef :            1           0
+ Triangle numero :          106  | triPartRef :            1           0
+ Triangle numero :          107  | triPartRef :            1           0
+ Triangle numero :          108  | triPartRef :            1           0
+ Triangle numero :          109  | triPartRef :            1           0
+ Triangle numero :          110  | triPartRef :            1           0
+ Triangle numero :          111  | triPartRef :            1           0
+ Triangle numero :          112  | triPartRef :            1           0
+ Triangle numero :          113  | triPartRef :            1           0
+ Triangle numero :          114  | triPartRef :            1           0
+ Triangle numero :          115  | triPartRef :            1           0
+ Triangle numero :          116  | triPartRef :            1           0
+ Triangle numero :          117  | triPartRef :            1           0
+ Triangle numero :          118  | triPartRef :            1           0
+ Triangle numero :          119  | triPartRef :            1           0
+ Triangle numero :          120  | triPartRef :            1           0
+ Triangle numero :          121  | triPartRef :            1           0
+ Triangle numero :          122  | triPartRef :            1           0
+ Triangle numero :          123  | triPartRef :            1           0
+ Triangle numero :          124  | triPartRef :            1           0
+ Triangle numero :          125  | triPartRef :            1           0
+ Triangle numero :          126  | triPartRef :            1           0
+ Triangle numero :          127  | triPartRef :            1           0
+ Triangle numero :          128  | triPartRef :            1           0

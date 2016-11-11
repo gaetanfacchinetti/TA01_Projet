@@ -111,17 +111,17 @@ program main
   ! la matrice p_Kelim pour avoir quelque chose de bon
 
   ! calcul du residu theorique
-  ! allocate(residu(mail%nbNodes))
-  ! residu=pb%felim-pb%p_Kelim*pb%uexa
-  ! erreur=dot_product(residu,residu)
+  allocate(residu(mail%nbNodes))
+  residu=pb%felim-pb%p_Kelim*pb%uexa
+  erreur=dot_product(residu,residu)
   
-  ! call MPI_REDUCE(erreur, erreur_res, 1, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+  call MPI_REDUCE(erreur, erreur_res, 1, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
   
   if (myRank == 0) then
 
-     !erreur_res = sqrt(erreur_res) 
+     erreur_res = sqrt(erreur_res) 
 
-     print *, "Residu theorique=" ! ,  erreur_res
+     print *, "Residu theorique=",  erreur_res
 
      write(*,*) '-----------------------------------------------------------'
      write(*,*) 'Resolution du systeme lineaire : '
@@ -130,10 +130,10 @@ program main
 
 
   ! Resolution par Jacobi
-  ! call solveJacobi(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
+  call solveJacobi(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
 
   ! Resolution par Gauss Seidel
-  call solveGaussSeidel(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
+  ! call solveGaussSeidel(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
 
 
 
@@ -179,7 +179,7 @@ program main
   if (myRank == 0) call saveToVtu(pb%mesh,pb%u,pb%uexa)
 
   ! Verification des resultats
-  ! if (myRank == 0) write(*,*) pb%u - pb%uexa
+  if (myRank == 0) write(*,*) pb%u - pb%uexa
   ! if (myRank == 0) then
   !    do j=1,size(pb%u)
   !       write(*,*) pb%u(j),j

@@ -65,7 +65,7 @@ module amsta01probleme
         ! pb%uexa(i) = 0
          
         ! -f est la fonction égale au laplacien
-        pb%f(i) = exp((x+y)/8)/16
+        pb%f(i) = exp((x+y)/8)/32
         ! pb%f(i) = 0
         ! pb%f(i) = 2*(x*(6-x)+y*(2-y))
 
@@ -382,7 +382,7 @@ module amsta01probleme
       ! on alloue le vecteur uk_prime qui contient les noeuds à envoyer
       if(myRank /= 0) allocate(uk_sec(size(pb%mesh%intFront2glob)))
       if(myRank == 0) allocate(uk_sec(size(pb%mesh%intFront2glob_proc0(1,:))))
-      allocate(uk_tri(size(uk)))
+
 
 
       ! On preferera faire une boucle do pour ne pas avoir de fuite. On sort avec un exit.
@@ -391,7 +391,6 @@ module amsta01probleme
          ! Iteration de uk
          uk = spmatvec(M_inv,spmatvec(N,uk)) + spmatvec(M_inv,pb%felim)
 
-         uk_tri = uk
 
          ! on remplit le vecteur uk_prime des noeuds à envoyer grâce à int2glob sur le proc 0 (interface)
          if (myRank == 0) uk_prime(:) = uk(pb%mesh%int2glob(:))
@@ -428,14 +427,8 @@ module amsta01probleme
          if (mod(k,10) == 0) then
 
             ! Calcul de residu et de la norme
-            rk = spmatvec(pb%p_Kelim, uk) - pb%felim
-
-            ! Si le sommet n'appartient pas au sous domaine alors on met rk a 0
-            ! On pourrait avoir des problemes pour des sommets aux frontieres
-            do j=1,n_size
-               if(pb%mesh%refPartNodes(j) /= myRank) rk(j) = 0
-            end do
-
+            rk = spmatvec(pb%p_Kelim, uk) - pb%felim    
+  
             ! Produit scalaire pour un domaine donne
             sum = dot_product(rk,rk)
 
@@ -459,11 +452,8 @@ module amsta01probleme
 
       end do
 
-
       ! On recompose la solution avec les donnees de chaque processeur
-      ! Si le sommet n'appartient pas au sous domaine alors on met uk a 0
-      ! On pourrait avoir des problemes pour des sommets aux frontieres
-      do j=1,n_size
+      do j =1, n_size
          if(pb%mesh%refPartNodes(j) /= myRank) uk(j) = 0
       end do
 
@@ -574,7 +564,7 @@ module amsta01probleme
       
       ! On preferera faire une boucle do pour ne pas avoir de fuite. On sort avec un exit.
       do  k = 1,5000
-         
+
          if (myRank /= 0) then
 
             ! Iteration de uk
@@ -646,12 +636,10 @@ module amsta01probleme
       end do
 
 
-      ! On recompose la solution avec les donnees de chaque processeur
-      ! Si le sommet n'appartient pas au sous domaine alors on met uk a 0
-      ! On pourrait avoir des problemes pour des sommets aux frontieres
       do j=1,n_size
          if(pb%mesh%refPartNodes(j) /= myRank) uk(j) = 0
       end do
+
 
       ! On recupere tout sur le processeur 0
       call MPI_REDUCE(uk, pb%u, n_size, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
