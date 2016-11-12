@@ -600,7 +600,7 @@ module amsta01probleme
 
          end if
 
-         
+
          ! On remplit le vecteur uk_prime des noeuds a envoyer grace à int2glob sur le proc 0 (interface)
          if(myRank == 0) uk_prime(:) = uk(pb%mesh%int2glob(:))
          ! on envoit uk_prime de 0 vers les autres proc

@@ -305,7 +305,7 @@ module amsta01maillage
               end if
            end do
         end do
-        
+
      end if condition_rank_0
 
 
