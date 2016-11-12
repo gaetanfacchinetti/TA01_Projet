@@ -130,10 +130,10 @@ program main
 
 
   ! Resolution par Jacobi
-  call solveJacobi(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
+  ! call solveJacobi(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
 
   ! Resolution par Gauss Seidel
-  ! call solveGaussSeidel(pb, 0.000000001, conv, myRank, nbSsDomaine, ierr)
+  call solveGaussSeidel(pb, 0.001, conv, myRank, nbSsDomaine, ierr)
 
 
 
@@ -179,7 +179,7 @@ program main
   if (myRank == 0) call saveToVtu(pb%mesh,pb%u,pb%uexa)
 
   ! Verification des resultats
-  if (myRank == 0) write(*,*) pb%u - pb%uexa
+  ! if (myRank == 0) write(*,*) pb%u - pb%uexa
   ! if (myRank == 0) then
   !    do j=1,size(pb%u)
   !       write(*,*) pb%u(j),j

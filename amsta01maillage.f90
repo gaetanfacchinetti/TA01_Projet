@@ -309,10 +309,11 @@ module amsta01maillage
      end if condition_rank_0
 
 
-     
 
-     ! On construit tous les triangles sur le processeur 0
-     ! Ceci pour la representation a la fin
+
+    ! On construit tous les triangles sur le processeur 0
+    ! Ceci pour la representation a la fin
+
      condition_constr_pr_repr : if (myRank == 0) then
 
         allocate(mail%triVerticesTot(mail%nbTriTot,3))
@@ -324,7 +325,7 @@ module amsta01maillage
 
               mail%triVerticesTot(j,1:3) = mail%elemsVertices(i,1:3)
               j=j+1
-              
+
            end if
         end do
 
