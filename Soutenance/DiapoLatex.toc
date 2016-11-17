@@ -3,4 +3,10 @@
 \beamer@sectionintoc {1}{Introduction du probl\IeC {\`e}me}{3}{0}{1}
 \beamer@subsectionintoc {1}{1}{L'\IeC {\'e}quation de la chaleur}{3}{0}{1}
 \beamer@subsectionintoc {1}{2}{La m\IeC {\'e}tode des \IeC {\'e}l\IeC {\'e}ments finis}{5}{0}{1}
-\beamer@sectionintoc {2}{Nouvelle section}{6}{0}{2}
+\beamer@sectionintoc {2}{M\IeC {\'e}thode de travail}{7}{0}{2}
+\beamer@subsectionintoc {2}{1}{D\IeC {\'e}coupage du probl\IeC {\`e}me sur les processeurs}{8}{0}{2}
+\beamer@subsectionintoc {2}{2}{Le d\IeC {\'e}coupage en pratique}{9}{0}{2}
+\beamer@sectionintoc {3}{Parall\IeC {\'e}lisation des solveurs}{10}{0}{3}
+\beamer@subsectionintoc {3}{1}{M\IeC {\'e}thode de Jacobi}{11}{0}{3}
+\beamer@subsectionintoc {3}{2}{M\IeC {\'e}thode de Gauss-Seidel}{13}{0}{3}
+\beamer@sectionintoc {4}{Resultats}{14}{0}{4}

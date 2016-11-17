@@ -14,15 +14,41 @@
 \headcommand {\beamer@subsectionentry {0}{1}{2}{5}{La m\IeC {\'e}tode des \IeC {\'e}l\IeC {\'e}ments finis}}\headcommand {\beamer@subsectionpages {3}{4}}
 \headcommand {\slideentry {1}{2}{1}{5/5}{La m\IeC {\'e}tode des \IeC {\'e}l\IeC {\'e}ments finis}{0}}
 \headcommand {\beamer@framepages {5}{5}}
-\headcommand {\sectionentry {2}{Nouvelle section}{6}{Nouvelle section}{0}}
-\headcommand {\beamer@sectionpages {3}{5}}
-\headcommand {\beamer@subsectionpages {5}{5}}
-\headcommand {\slideentry {2}{0}{1}{6/6}{}{0}}
+\headcommand {\slideentry {1}{2}{2}{6/6}{La m\IeC {\'e}tode des \IeC {\'e}l\IeC {\'e}ments finis}{0}}
 \headcommand {\beamer@framepages {6}{6}}
-\headcommand {\slideentry {2}{0}{2}{7/7}{}{0}}
+\headcommand {\sectionentry {2}{M\IeC {\'e}thode de travail}{7}{M\IeC {\'e}thode de travail}{0}}
+\headcommand {\beamer@sectionpages {3}{6}}
+\headcommand {\beamer@subsectionpages {5}{6}}
+\headcommand {\slideentry {2}{0}{1}{7/7}{}{0}}
 \headcommand {\beamer@framepages {7}{7}}
-\headcommand {\beamer@partpages {1}{7}}
-\headcommand {\beamer@subsectionpages {6}{7}}
-\headcommand {\beamer@sectionpages {6}{7}}
-\headcommand {\beamer@documentpages {7}}
-\headcommand {\def \inserttotalframenumber {7}}
+\headcommand {\beamer@subsectionentry {0}{2}{1}{8}{D\IeC {\'e}coupage du probl\IeC {\`e}me sur les processeurs}}\headcommand {\beamer@subsectionpages {7}{7}}
+\headcommand {\slideentry {2}{1}{1}{8/8}{D\IeC {\'e}coupage du probl\IeC {\`e}me sur les processeurs}{0}}
+\headcommand {\beamer@framepages {8}{8}}
+\headcommand {\beamer@subsectionentry {0}{2}{2}{9}{Le d\IeC {\'e}coupage en pratique}}\headcommand {\beamer@subsectionpages {8}{8}}
+\headcommand {\slideentry {2}{2}{1}{9/9}{Le d\IeC {\'e}coupage en pratique}{0}}
+\headcommand {\beamer@framepages {9}{9}}
+\headcommand {\sectionentry {3}{Parall\IeC {\'e}lisation des solveurs}{10}{Parall\IeC {\'e}lisation des solveurs}{0}}
+\headcommand {\beamer@sectionpages {7}{9}}
+\headcommand {\beamer@subsectionpages {9}{9}}
+\headcommand {\slideentry {3}{0}{1}{10/10}{}{0}}
+\headcommand {\beamer@framepages {10}{10}}
+\headcommand {\beamer@subsectionentry {0}{3}{1}{11}{M\IeC {\'e}thode de Jacobi}}\headcommand {\beamer@subsectionpages {10}{10}}
+\headcommand {\slideentry {3}{1}{1}{11/11}{M\IeC {\'e}thode de Jacobi}{0}}
+\headcommand {\beamer@framepages {11}{11}}
+\headcommand {\slideentry {3}{1}{2}{12/12}{M\IeC {\'e}thode de Jacobi}{0}}
+\headcommand {\beamer@framepages {12}{12}}
+\headcommand {\beamer@subsectionentry {0}{3}{2}{13}{M\IeC {\'e}thode de Gauss-Seidel}}\headcommand {\beamer@subsectionpages {11}{12}}
+\headcommand {\slideentry {3}{2}{1}{13/13}{M\IeC {\'e}thode de Gauss-Seidel}{0}}
+\headcommand {\beamer@framepages {13}{13}}
+\headcommand {\sectionentry {4}{Resultats}{14}{Resultats}{0}}
+\headcommand {\beamer@sectionpages {10}{13}}
+\headcommand {\beamer@subsectionpages {13}{13}}
+\headcommand {\slideentry {4}{0}{1}{14/14}{}{0}}
+\headcommand {\beamer@framepages {14}{14}}
+\headcommand {\slideentry {4}{0}{2}{15/15}{}{0}}
+\headcommand {\beamer@framepages {15}{15}}
+\headcommand {\beamer@partpages {1}{15}}
+\headcommand {\beamer@subsectionpages {14}{15}}
+\headcommand {\beamer@sectionpages {14}{15}}
+\headcommand {\beamer@documentpages {15}}
+\headcommand {\def \inserttotalframenumber {15}}

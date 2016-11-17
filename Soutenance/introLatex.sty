@@ -1,0 +1,86 @@
+%% Informations générales
+\NeedsTeXFormat{LaTeX2e}[1999/01/01]
+\ProvidesPackage{introLatex}[2016/10/02 1.0]
+
+
+
+%% ------------------------------------------- %%
+%% Chargement des extensions
+%% ------------------------------------------- %%
+
+
+% Extensions principale - langue et format 
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[T1]{fontenc}
+\RequirePackage[francais]{babel}
+
+
+
+% Pour les figures, images et tableaux longs
+\RequirePackage{graphicx, wrapfig}
+\RequirePackage{multirow}
+\RequirePackage{array}
+\RequirePackage{float}
+\RequirePackage[hang,footnotesize]{caption}
+\RequirePackage{multicol}
+\usepackage{pgf}
+
+% Pour les mathématiques
+\RequirePackage{mathrsfs}                     % Pour des symboles
+\RequirePackage{amsmath, amssymb}             % Pour les expressions.
+\RequirePackage{amsbsy}
+\RequirePackage{xfrac}                        % Pour des fractions de taille réduite
+\RequirePackage{cases}                        % For system of equation
+\RequirePackage{stmaryrd}                     % For brackets
+
+
+% Pour la mise en forme du texte
+\RequirePackage{textcomp}         % Package pour les symboles particuliers
+\RequirePackage{marvosym}         % Package pour le symbole euro
+\RequirePackage{xcolor}           % Package pour la couleur
+\RequirePackage{soul}             % Package pour souligner les mots
+\RequirePackage{hyperref}         % Pour les liens et références
+\RequirePackage{indentfirst}      % Pour indenter le texte au début 
+
+
+% Commande pour mettre le texte lipsum
+\RequirePackage{lipsum}
+
+
+
+
+% Commande pour introduire du code
+\RequirePackage{listings}
+\lstset{
+basicstyle=\ttfamily\small, %
+identifierstyle=\color{red}, %
+keywordstyle=\color{blue}, %
+stringstyle=\color{black!90}, %
+commentstyle=\it\color{gray}, %
+columns=flexible, %
+tabsize=2, %
+extendedchars=true, %
+showspaces=false, %
+showstringspaces=false, %
+numbers=left, %
+numberstyle=\tiny, %
+breaklines=true, %
+breakautoindent=true, %
+captionpos=b
+}
+
+
+% Commande pour personnaliser tableau
+\newcolumntype{M}[1]{>{\raggedright}m{#1}}
+
+% Commande pour les légendes de figures
+\captionsetup{format=plain}
+
+
+% Pour la coupure des mots avec tiret
+\newcommand\hyph{\nobreak\hskip0pt-\nobreak\hskip0pt\relax}
+
+
+
+%% Fin du package
+\endinput
